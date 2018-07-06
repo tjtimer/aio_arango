@@ -56,7 +56,7 @@ def serialize(content: str):
     return target
 
 def parse():
-    docs_dir = Path(__file__).parent.parent / 'arango-http-docs'
+    docs_dir = Path(__file__).parent
     config = {}
     for in_file in docs_dir.glob('**/*.html'):
         with in_file.open('r') as docs:
