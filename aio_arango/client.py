@@ -4,8 +4,12 @@
 # Email: tjtimer@gmail.com
 import asyncio
 import typing
+from pathlib import Path
+from pprint import pprint
 
 import aiohttp
+import yaml
+
 from aio_arango import endpoints as ep
 
 
@@ -32,6 +36,10 @@ class ArangoClient:
         self._auth_token = None
         self._session = None
         self._db = None
+        self._endpoints = None
+        with open(Path(__file__).parent / 'url_conf.yaml', 'r') as conf:
+            self._endpoints = yaml.load(conf)
+        pprint(vars(self))
 
     def db_url(self, db=None, collection=None, graph=None, id=None, v=False, e=False):
         return
