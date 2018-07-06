@@ -15,9 +15,9 @@ upper_re = re.compile(r'([A-Z])')
 req_re = re.compile(r'http://localhost:8529(?P<jstr>.+)EOF')
 def snake_case(word):
     print('snake_case: ', word)
-    nw = upper_re.sub("_._._{\1}", word)
-    print('snake_cased: ', word)
-    return nw.lower()
+    nw = [word[0].lower(), *upper_re.finditer(word[1:])]
+    print('snake_cased: ', nw)
+    return nw
 
 def serialize(content: str):
     def get_name(method, url):
