@@ -14,7 +14,7 @@ code_re = re.compile(r'({(?P<obj>\w+)-(?P<key>\w+)*\})')
 upper_re = re.compile(r'([A-Z])')
 req_re = re.compile(r'http://localhost:8529(?P<jstr>.+)EOF')
 def snake_case(word):
-    nw = upper_re.sub(word, "_{\1}".lower())
+    nw = upper_re.sub(word, "_._._{\0}".lower())
     return nw
 
 def serialize(content: str):
