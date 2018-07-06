@@ -38,8 +38,11 @@ class ArangoClient:
         self._db = None
         self._endpoints = None
         with open(Path(__file__).parent / 'url_conf.yaml', 'r') as conf:
-            self._endpoints = yaml.load(conf)
+            for k, v in  yaml.load(conf).items():
+                setattr(self, k, v)
+        print('end init')
         pprint(vars(self))
+        print('!end init')
 
     def db_url(self, db=None, collection=None, graph=None, id=None, v=False, e=False):
         return
@@ -58,7 +61,7 @@ class ArangoClient:
     async def get_auth_token(self, username: str, password: str):
         resp = await self._session.request(
                 ep.auth_token.method,
-                self._url_prefix+ ep.auth_token.url,
+                self._url_prefix + ep.auth_token.url,
                 json={'username': username, 'password': password}
         )
         data = await resp.json()

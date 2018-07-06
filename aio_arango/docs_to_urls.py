@@ -30,7 +30,6 @@ def serialize(content: str):
             base = h3.find_next('code')
             m, url = base.string.split(' ')
             name = get_name(m, url).replace('_get', '')
-            print(name)
             target[name] = {
                 'url': url.replace('-', '_'),
                 'method': m,
@@ -41,7 +40,6 @@ def serialize(content: str):
             ulist = h3.find_next('ul')
             last = ''
             for s in ulist.strings:
-                print(s)
                 if '(required):' in s:
                     target[name]['required'].append(last.replace('-', '_'))
                 elif ':' in s and not last.isnumeric():
@@ -56,12 +54,11 @@ def serialize(content: str):
     return target
 
 def parse():
-    docs_dir = Path(__file__).parent
+    docs_dir = Path(__file__).parent.parent / 'arango-http-docs'
     config = {}
     for in_file in docs_dir.glob('**/*.html'):
         with in_file.open('r') as docs:
             config.update(**serialize(docs.read()))
-    pprint(config)
     with open('url_conf.yaml', 'w') as conf:
         yaml.dump(config, conf)
 
