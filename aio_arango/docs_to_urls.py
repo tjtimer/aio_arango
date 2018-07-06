@@ -19,9 +19,9 @@ def snake_case(word):
 
 def serialize(content: str):
     def get_name(method, url):
-        parts = [snake_case(p).replace('-', '_') for p in url.split('/')
+        parts = [snake_case(p) for p in url.split('/')
                  if not any([sym in p for sym in ['_', '{']])]
-        return parts[0] + '_'.join(parts[1:]) + f"_{method.lower()}"
+        return parts + f"_{method.lower()}"
     target = {}
     cont = BeautifulSoup(content, 'lxml-xml')
     for h3 in cont.find_all('h3', id=True):
