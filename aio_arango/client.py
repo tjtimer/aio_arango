@@ -36,8 +36,8 @@ class ArangoClient:
         self._auth_token = None
         self._session = None
         self._db = None
-        with open(Path(__file__).parent.parent / 'url_conf.yaml', 'rb') as conf:
-            self._api = yaml.load(conf.read())
+        with open(Path(__file__).parent.parent / 'url_conf.yaml', 'r') as conf:
+            self._api  = yaml.load(conf.read())
         print('vars self')
         pprint(vars(self))
 
