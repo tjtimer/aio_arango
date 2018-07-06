@@ -16,7 +16,17 @@ def serialize(content: str):
     target = {}
     cont = BeautifulSoup(content, 'lxml-xml')
     for h3 in cont.find_all('h3', id=True):
-        name = h3['id'].replace('_their', '').replace('-', '_').replace('_of', '')
+        name = h3['id'].replace(
+                '-their-', '-'
+        ).replace(
+                '-the-', '-'
+        ).replace(
+                '-a-', '-'
+        ).replace(
+                '-of-', '-'
+        ).replace(
+                '-', '_'
+        ).replace('returns_', '')
         target[name] = {}
         try:
             base = h3.find_next('code')
@@ -40,7 +50,7 @@ def serialize(content: str):
     return target
 
 def parse():
-    docs_dir = Path('HTTP')
+    docs_dir = Path('../arango_docs/HTTP')
     config = {}
     for in_file in docs_dir.glob('**/*.html'):
         if in_file.parent.name not in config.keys():
