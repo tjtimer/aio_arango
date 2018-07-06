@@ -6,8 +6,6 @@ import asyncio
 import typing
 
 import aiohttp
-from aiohttp import web
-
 from aio_arango import endpoints as ep
 
 
@@ -21,17 +19,22 @@ class ArangoClient:
         if path is None:
             con = aiohttp.TCPConnector(loop=loop)
             self._address = address
+            self._url_prefix = f'http://{address[0]}:{address[1]}'
             self._path = None
         else:
             con = aiohttp.UnixConnector(path=path, loop=loop)
             self._path = path
             self._address = None
+            self._url_prefix = ''
         self._loop = loop
         self._connector = con
-        self._headers = {}
+        self._headers = {'Content-Type': 'application/json'}
         self._auth_token = None
         self._session = None
-        self._dbs_allowed = None
+        self._db = None
+
+    def db_url(self, db=None, collection=None, graph=None, id=None, v=False, e=False):
+        return
 
     async def setup(self):
         self._session = aiohttp.ClientSession(connector=self._connector)
@@ -41,13 +44,14 @@ class ArangoClient:
         self._headers.update(**config.kwargs.pop('headers', {}))
         config.kwargs['headers'] = self._headers
         return await self._session.request(
-                config.method, config.url,
+                config.method, self._url_prefix + config.url,
                 **config.kwargs)
 
     async def get_auth_token(self, username: str, password: str):
         resp = await self._session.request(
                 ep.auth_token.method,
-                ep.auth_token.url, json={'username': username, 'password': password}
+                self._url_prefix+ ep.auth_token.url,
+                json={'username': username, 'password': password}
         )
         data = await resp.json()
         self._auth_token = data['jwt']
@@ -68,4 +72,19 @@ class ArangoClient:
     async def db_current(self):
         resp = await self.query(ep.db_current)
         data = await resp.json()
-        return data['result']
+        return data
+
+    async def clt_create(self):
+        pass
+
+    async def clt_get(self):
+        pass
+
+    async def clt_update(self):
+        pass
+
+    async def clt_delete(self):
+        pass
+
+    async def graph(self):
+        pass
