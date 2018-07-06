@@ -15,7 +15,7 @@ upper_re = re.compile(r'([A-Z])')
 req_re = re.compile(r'http://localhost:8529(?P<jstr>.+)EOF')
 def snake_case(word):
     print('snake_case: ', word)
-    nw = [word[0].lower(), *upper_re.finditer(word[1:])]
+    nw = [*upper_re.finditer(word[1:])]
     print('snake_cased: ', nw)
     return nw
 
