@@ -16,6 +16,7 @@ req_re = re.compile(r'http://localhost:8529(?P<jstr>.+)EOF')
 def snake_case(word):
     for u in upper_re.findall(word):
         word = word.replace(u, f'_{u.lower()}')
+    print('word: ', word)
     return word
 
 def serialize(content: str):
