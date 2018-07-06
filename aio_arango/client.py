@@ -37,7 +37,7 @@ class ArangoClient:
         self._session = None
         self._db = None
         self._api = {}
-        with open(Path(__file__).parent / 'url_conf.yaml', 'r') as conf:
+        with open(Path(__file__).parent.parent / 'url_conf.yaml', 'r') as conf:
             api = yaml.load(conf)
             print(api)
             self._api.update(**api)
