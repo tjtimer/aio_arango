@@ -16,7 +16,7 @@ req_re = re.compile(r'http://localhost:8529(?P<jstr>.+)EOF')
 def snake_case(word):
     print('snake_case: ', word)
     for u in upper_re.findall(word):
-        word.replace(u, f'_{u.lower()}')
+        word = word.replace(u, f'_{u.lower()}')
     print('snake_cased: ', word)
     return word
 
