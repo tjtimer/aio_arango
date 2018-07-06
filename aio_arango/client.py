@@ -36,13 +36,9 @@ class ArangoClient:
         self._auth_token = None
         self._session = None
         self._db = None
-        self._endpoints = None
-        with open(Path(__file__).parent / 'url_conf.yaml', 'r') as conf:
-            for k, v in  yaml.load(conf).items():
-                setattr(self, k, v)
-        print('end init')
-        pprint(vars(self))
-        print('!end init')
+        with open(Path(__file__).parent.parent / 'url_conf.yaml', 'r') as conf:
+            self._api = yaml.load(conf)
+        pprint(self._api.keys())
 
     def db_url(self, db=None, collection=None, graph=None, id=None, v=False, e=False):
         return
