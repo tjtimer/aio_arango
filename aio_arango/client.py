@@ -33,11 +33,11 @@ class ArangoClient:
             self._url_prefix = ''
         self._loop = loop
         self._connector = con
-        self._headers = {'Content-Type': 'application/json'}
         self._auth_token = None
         self._session = None
-        self._db = database
         self._api = ArangoAPI(self)
+        self.headers = {'Content-Type': 'application/json'}
+        self.db = database
 
     async def login(self, username: str, password: str):
         self._session = aiohttp.ClientSession(connector=self._connector)
@@ -47,9 +47,10 @@ class ArangoClient:
                 json={'username': username, 'password': password}
         )
         data = await resp.json()
-        self._auth_token = data['jwt']
-        self._headers['Authorization'] = f'bearer {self._auth_token}'
-        return self._auth_token
+        if resp.status < 300:
+            self._auth_token = data['jwt']
+            self.headers['Authorization'] = f'bearer {self._auth_token}'
+        return data
 
     async def close(self):
         await self._session.close()

@@ -20,7 +20,7 @@ class ArangoAPI:
     re_method = re.compile(r'GET|POST|PATCH|PUT|DELETE|HEAD')
     re_upper = re.compile(r'([A-Z][a-z])')
     re_tags = re.compile(r'<[^>]*>')
-    re_required_data = re.compile(r'http://(?P<ex>[^HTP]{4})+(HTTP/)', re.MULTILINE)
+    re_required_data = re.compile(r'(http://localhost:8529.+)(EOF)([^\2]+)(\2)')
     re_required_url_vars = re.compile(r'{(?P<uvar>[^}]+)}')
     re_name_from_doc = re.compile(
             ("(?P<url_end>add|all|change|configure|create|"
@@ -62,7 +62,7 @@ class ArangoAPI:
                  not any([sym in p for sym in ['_', '{']])
                  and p not in [None, '']]
         )
-        name = name.replace('-', '_').replace('#', '_')
+        name = name.replace('-', '_').replace('#', '_').replace('gharial', 'graph')
         if name in self._conf.keys():
             try:
                 if method == self._conf[name]['method']:
@@ -80,6 +80,8 @@ class ArangoAPI:
         for chapter in doc.find_all('chapter'):
             try:
                 ctitle = chapter.find('h3', id=True)
+                if ctitle.string in ['Configuration']:
+                    continue
                 m, url = ctitle.find_next('code').string.split(' ')
                 name = self.name_endpoint(m, url, ctitle['id'])
                 self._conf[name] = {
@@ -87,32 +89,31 @@ class ArangoAPI:
                     'method': m,
                     'required': [*self.re_required_url_vars.findall(url.replace('-', '_'))],
                     'options': [],
-                    'help': f"""{ctitle.string.strip()}"""
+                    'help': f"""\n**{ctitle.string.strip()}**\n"""
                 }
                 for ul in chapter.find_all('ul'):
                     required = False
                     title = ul.find_previous('strong').string.strip()
-                    if any([w in title.lower() for w in ['example', 'return', 'response']]):
-                        continue
-                    if 'required' in title.lower():
-                        required = True
-                    self._conf[name]['help'] += f"""\n{title.replace(':', '')}"""
-                    for li in ul.find_all('li'):
-                        _key = li.strong.string
-                        if _key is None:
-                            _key = li.em.string
-                        key = self.snake_case(_key)
-                        s = li.get_text().strip()
-                        if 'required' in s or required is True:
-                            if key not in self._conf[name]['required']:
-                                self._conf[name]['required'].append(key)
-                        else:
-                            self._conf[name]['options'].append(key)
-                        self._conf[name]['help'] += f"""\n\t{key}: {' '.join(s.split(':')[1:])}"""
-                for pre in chapter.find_all('pre'):
-                    pre_txt = self.re_required_data.search(pre.get_text().strip())
-                    if pre_txt:
-                        self._conf[name]['help'] += f"""\n\t{pre_txt.group('ex')}"""
+                    if not any([w in title.lower() for w in ['example', 'return', 'response']]):
+                        if 'required' in title.lower():
+                            required = True
+                        self._conf[name]['help'] += f"""\n#### {title.replace(':', '')}"""
+                        for li in ul.find_all('li'):
+                            _key = li.strong.string
+                            if _key is None:
+                                _key = li.em.string
+                            key = self.snake_case(_key)
+                            s = li.get_text().strip()
+                            self._conf[name]['help'] += f"""\n- {key}: {' '.join(s.split(':')[1:])}"""
+                            if 'required' in s or required is True:
+                                if key not in self._conf[name]['required']:
+                                    self._conf[name]['required'].append(key)
+                            else:
+                                self._conf[name]['options'].append(key)
+                pre_txt = self.re_required_data.search(chapter.find_next('pre').get_text())
+                if pre_txt:
+                    self._conf[name]['help'] += f"""  \n\n**Example:**\n\n  - {pre_txt.group(1)}"""
+                    self._conf[name]['help'] += f"""  \n- data: {pre_txt.group(3).strip()}"""
 
             except (AttributeError, ValueError):
                 pass
@@ -141,7 +142,10 @@ class ArangoAPI:
     def save(self):
         with self._conf_file.open(mode='w') as conf:
             yaml.dump(self._conf, conf)
-
+        with open(self._docs_dir / 'wiki.md', 'w') as file:
+            for k, v in self._conf.items():
+                file.write(f"\n\n# {k}\n")
+                file.writelines(v['help'])
 if __name__ == '__main__':
     uc = ArangoAPI()
     pprint(uc._conf)

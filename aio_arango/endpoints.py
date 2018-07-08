@@ -19,28 +19,19 @@ class Request:
         self._help = help
 
     async def __call__(self, *args, **kwargs):
-        method = kwargs.pop('method', self._method)
-        db_name = kwargs.pop('db_name', self.client._db)
-        if 'headers' in kwargs.keys():
-            kwargs['headers'].update(**self.client._headers)
-        else:
-            kwargs['headers'] = self.client._headers
+        db_name = kwargs.pop('db_name', self.client.db)
         if db_name is None:
             db_name = ''
         else:
-            db_name = f'/_db{db_name}'
+            db_name = f'/_db/{db_name}'
         prefix = self.client._url_prefix + db_name
-        url = (f"{kwargs.pop('url_prepend', '')}"
-               f"{kwargs.pop('url', self._url)}"
-               f"{kwargs.pop('url_append', '')}")
+        url = kwargs.pop('url', self._url)
         for pl, rep in kwargs.pop('url_vars', {}).items():
             orig = '{' + pl.replace('_', '-') + '}'
             url = url.replace(orig, rep)
-        if kwargs.pop('debug', None) is True:
-            print('vars request')
-            pprint(kwargs)
-            print(method, prefix+url)
-        return await self.client._session.request(method, prefix+url, **kwargs)
+        method = kwargs.pop('method', self._method)
+        headers = kwargs.pop('headers', self.client.headers)
+        return await self.client._session.request(method, prefix+url, headers=headers, **kwargs)
 
     def __str__(self):
         return (f'<Request {self._method} {self._url} '
