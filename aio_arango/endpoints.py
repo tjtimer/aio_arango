@@ -2,52 +2,50 @@
 # created: 02.07.18
 # Author: Tim "tjtimer" Jedro
 # Email: tjtimer@gmail.com
+from pprint import pprint
+
 import aiohttp
 
 
-class RequestConfig:
-    __slots__ = ('method', 'url', 'kwargs', '_required', '_options')
+class Request:
 
-    def __init__(self, method: str=None, url:str=None,
-                 required: dict=None, options:dict=None):
-        if method is None:
-            method = 'GET'
-        self.method = method
-        self.url = url
-        self.kwargs = {}
+    def __init__(self, client, method: str=None, url:str=None,
+                 required: dict=None, options:dict=None, help: dict = None):
+        self.client = client
+        self._method = method
+        self._url = url
         self._required = required
         self._options = options
+        self._help = help
 
-    def __call__(self, **kwargs):
-        self.method = kwargs.pop('method', self.method)
-        self.url = (f"{kwargs.pop('url_prepend', '')}"
-                    f"{kwargs.pop('url', self.url)}"
-                    f"{kwargs.pop('url_append', '')}")
-        self.kwargs.update(**kwargs)
+    async def __call__(self, *args, **kwargs):
+        method = kwargs.pop('method', self._method)
+        db_name = kwargs.pop('db_name', self.client._db)
+        if 'headers' in kwargs.keys():
+            kwargs['headers'].update(**self.client._headers)
+        else:
+            kwargs['headers'] = self.client._headers
+        if db_name is None:
+            db_name = ''
+        else:
+            db_name = f'/_db{db_name}'
+        prefix = self.client._url_prefix + db_name
+        url = (f"{kwargs.pop('url_prepend', '')}"
+               f"{kwargs.pop('url', self._url)}"
+               f"{kwargs.pop('url_append', '')}")
+        for pl, rep in kwargs.pop('url_vars', {}).items():
+            orig = '{' + pl.replace('_', '-') + '}'
+            url = url.replace(orig, rep)
+        if kwargs.pop('debug', None) is True:
+            print('vars request')
+            pprint(kwargs)
+            print(method, prefix+url)
+        return await self.client._session.request(method, prefix+url, **kwargs)
 
     def __str__(self):
-        return (f'<RequestConfig {self.method} {self.url} '
+        return (f'<Request {self._method} {self._url} '
                 f'{self._required != dict()} {self._options != dict()}>')
+
     @property
-    def required(self):
-        return self._required
-
-
-auth_token = RequestConfig('POST', '/_open/auth')
-
-db_base = '/_api/database'
-db_list_all = RequestConfig(url=db_base)
-db_list_allowed = RequestConfig(url=f'{db_base}/user')
-db_current = RequestConfig(url=f'{db_base}/current')
-db_create = RequestConfig('POST', url=db_base, required={'json': 'name'})
-db_delete = RequestConfig('DELETE', url=db_base, required={'url_append': 'name'})
-
-clt_base = '/_db/$$db/_api/collection'
-clt_create = RequestConfig('POST', clt_base)
-clt_load = RequestConfig('PUT', clt_base)
-clt_get = RequestConfig('GET', clt_base)
-clt_delete = RequestConfig('DELETE', clt_base)
-
-# GRAPH
-g_base = '/$$db/_api/gharial'
-create_edge = RequestConfig('POST', f'{g_base}/$$g/edge/$$cn')
+    def help(self):
+        return self._help
