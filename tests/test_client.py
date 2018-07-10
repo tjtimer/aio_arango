@@ -2,9 +2,6 @@
 # created: 04.07.18
 # Author: Tim "tjtimer" Jedro
 # Email: tjtimer@gmail.com
-from pprint import pprint
-
-import pytest
 
 from aio_arango.client import ArangoClient
 
@@ -12,9 +9,7 @@ from aio_arango.client import ArangoClient
 def test_client_init():
     client = ArangoClient()
     assert hasattr(client, 'user')
-    print(client.user.help)
     assert hasattr(client, 'database')
-
 
 async def test_client_login(client, credentials):
     resp = await client.login(*credentials)
@@ -30,7 +25,6 @@ async def test_client_user_get(auth_client):
     print(user)
     assert isinstance(user, dict)
 
-
 async def test_client_user_create(root_client, client):
     response = await root_client.user(json={'user': 'testuschi', 'passwd': 'testuschi'})
     print(root_client.user.help)
@@ -39,8 +33,6 @@ async def test_client_user_create(root_client, client):
     print(user)
     await test_client_login(client, ('testuschi', 'testuschi'))
     assert isinstance(user, dict)
-
-
 
 async def test_client_user_delete(root_client, client):
     response = await root_client.user_delete(url_vars={'user': 'testuschi'})
@@ -51,3 +43,5 @@ async def test_client_user_delete(root_client, client):
     resp = await client.login('testuschi', 'testuschi')
     assert 'errorMessage' in resp.keys()
     assert 'Wrong credentials' in resp['errorMessage']
+    print(data)
+    assert isinstance(data, dict)
