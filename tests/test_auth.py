@@ -5,5 +5,5 @@
 async def test_auth(client, credentials):
     resp = await client.login(*credentials)
     assert client._auth_token == resp
-    assert 'Authorization' in client._headers.keys()
+    assert 'Authorization' in client.headers.keys()
 

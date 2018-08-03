@@ -20,7 +20,7 @@ class ArangoAPI:
     re_method = re.compile(r'GET|POST|PATCH|PUT|DELETE|HEAD')
     re_upper = re.compile(r'([A-Z][a-z])')
     re_tags = re.compile(r'<[^>]*>')
-    re_required_data = re.compile(r'http://(?P<ex>[^HTP]{4})+(HTTP/)', re.MULTILINE)
+    re_required_data = re.compile(r'(http://localhost:8529.+)(EOF)([^\2]+)(\2)')
     re_required_url_vars = re.compile(r'{(?P<uvar>[^}]+)}')
     re_name_from_doc = re.compile(
             ("(?P<url_end>add|all|change|configure|create|"
@@ -62,7 +62,7 @@ class ArangoAPI:
                  not any([sym in p for sym in ['_', '{']])
                  and p not in [None, '']]
         )
-        name = name.replace('-', '_').replace('#', '_')
+        name = name.replace('-', '_').replace('#', '_').replace('gharial', 'graph')
         if name in self._conf.keys():
             try:
                 if method == self._conf[name]['method']:
@@ -80,40 +80,51 @@ class ArangoAPI:
         for chapter in doc.find_all('chapter'):
             try:
                 ctitle = chapter.find('h3', id=True)
+                if ctitle.string in ['Configuration']:
+                    continue
                 m, url = ctitle.find_next('code').string.split(' ')
+                url = url.replace('-', '_')
                 name = self.name_endpoint(m, url, ctitle['id'])
                 self._conf[name] = {
                     'url': url,
                     'method': m,
-                    'required': [*self.re_required_url_vars.findall(url.replace('-', '_'))],
+                    'url_vars':  self.re_required_url_vars.findall(url),
+                    'required': [],
                     'options': [],
-                    'help': f"""{ctitle.string.strip()}"""
+                    'help': f"""\n**{ctitle.string.strip()}**\n"""
                 }
+                titles_seen = []
                 for ul in chapter.find_all('ul'):
                     required = False
-                    title = ul.find_previous('strong').string.strip()
-                    if any([w in title.lower() for w in ['example', 'return', 'response']]):
-                        continue
-                    if 'required' in title.lower():
-                        required = True
-                    self._conf[name]['help'] += f"""\n{title.replace(':', '')}"""
-                    for li in ul.find_all('li'):
-                        _key = li.strong.string
-                        if _key is None:
-                            _key = li.em.string
-                        key = self.snake_case(_key)
-                        s = li.get_text().strip()
-                        if 'required' in s or required is True:
-                            if key not in self._conf[name]['required']:
-                                self._conf[name]['required'].append(key)
-                        else:
-                            self._conf[name]['options'].append(key)
-                        self._conf[name]['help'] += f"""\n\t{key}: {' '.join(s.split(':')[1:])}"""
-                for pre in chapter.find_all('pre'):
-                    pre_txt = self.re_required_data.search(pre.get_text().strip())
+                    title = ul.find_previous('p').get_text().strip()
+                    if title not in titles_seen:
+                        titles_seen.append(title)
+                        if not any([w in title.lower() for w in ['example', 'return', 'response']]):
+                            if 'required' in title.lower():
+                                required = True
+                            self._conf[name]['help'] += f"""\n#### {title.replace(':', '')}"""
+                            for li in ul.find_all('li'):
+                                s = li.get_text().strip()
+                                key = s.split(' ')[0].replace(':', '').strip()
+                                self._conf[name]['help'] += f"""\n- {key}: {' '.join(s.split(':')[1:])}"""
+                                if 'required' in s or required is True:
+                                    if key not in self._conf[name]['required']:
+                                        self._conf[name]['required'].append(
+                                            self.snake_case(key))
+                                else:
+                                    self._conf[name]['options'].append(
+                                        self.snake_case(key))
+                g_seen = []
+                for example in chapter.find_all('pre'):
+                    pre_txt = self.re_required_data.search(example.get_text().strip())
                     if pre_txt:
-                        self._conf[name]['help'] += f"""\n\t{pre_txt.group('ex')}"""
-
+                        g = pre_txt.groups()
+                        g1 = pre_txt.group(1)
+                        g2 = pre_txt.group(3).strip()
+                        if g not in g_seen:
+                            self._conf[name]['help'] += f"""  \n\n**Example:**\n\n  - {g1}"""
+                            self._conf[name]['help'] += f"""  \n- data: {g2}"""
+                        g_seen.append(g)
             except (AttributeError, ValueError):
                 pass
         return self._conf
@@ -136,12 +147,26 @@ class ArangoAPI:
 
     def apply(self, client):
         for k, v in self._conf.items():
+            v.pop('url_vars')
             setattr(client, k, Request(client, **v))
 
     def save(self):
         with self._conf_file.open(mode='w') as conf:
             yaml.dump(self._conf, conf)
-
+        with open(self._docs_dir / 'wiki.md', 'w') as file:
+            for k, v in self._conf.items():
+                file.write(f"\n\n# {k}\n")
+                file.writelines(v['help'])
+        with open(self._docs_dir / 'request.py', 'w') as file:
+            for k, v in self._conf.items():
+                prefix = "{self.client._url_prefix}"
+                args_str = ''
+                if len(v['url_vars']):
+                    args_str = f"{', '.join(v['url_vars'])},"
+                file.write(
+                    f"""\n\nasync def {k}(self, {args_str}**kwargs):
+                    return await self._session.request(
+                    \"{v['method']}\", f\"{prefix}{v['url']}\", **kwargs)""")
 if __name__ == '__main__':
     uc = ArangoAPI()
     pprint(uc._conf)
