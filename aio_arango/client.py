@@ -8,8 +8,6 @@ from pprint import pprint
 
 import aiohttp
 
-from aio_arango.api import ArangoAPI
-
 
 class ArangoClient:
     def __init__(self,
@@ -56,6 +54,81 @@ class ArangoClient:
 
     async def close(self):
         await self._session.close()
+
+    async def graph(self, graph_name, **kwargs):
+        return await self._session.request(
+            "GET", f"{self._url_prefix}/_api/gharial/{graph_name}", **kwargs)
+
+    async def graph_create(self, *,
+                           name: str=None, edge_def: dict=None,
+                           orph: list=None):
+        json={'name': name, 'edgeDefinition': edge_def}
+        if orph is not None and isinstance(orph, list):
+            json['orphanCollections'] = orph
+        return await self._session.request(
+            "POST", f"{self._url_prefix}/_api/gharial", json=json)
+
+    async def graph_delete(self, graph_name, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self._url_prefix}/_api/gharial/{graph_name}", **kwargs)
+
+    async def graph_vertex(self, graph_name, collection_name, vertex_key, **kwargs):
+        return await self._session.request(
+            "GET",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
+
+    async def graph_vertex_create(self, graph_name, collection_name, **kwargs):
+        return await self._session.request(
+            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}",
+            **kwargs)
+
+    async def graph_vertex_update(self, graph_name, collection_name, vertex_key, **kwargs):
+        return await self._session.request(
+            "PATCH",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
+
+    async def graph_vertex_replace(self, graph_name, collection_name, vertex_key, **kwargs):
+        return await self._session.request(
+            "PUT",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
+
+    async def graph_vertex_delete(self, graph_name, collection_name, vertex_key, **kwargs):
+        return await self._session.request(
+            "DELETE",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
+
+    async def graph_edge(self, graph_name, collection_name, edge_key, **kwargs):
+        return await self._session.request(
+            "GET",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
+            **kwargs)
+
+    async def graph_edge_create(self, graph_name, collection_name, **kwargs):
+        return await self._session.request(
+            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}",
+            **kwargs)
+
+    async def graph_edge_update(self, graph_name, collection_name, edge_key, **kwargs):
+        return await self._session.request(
+            "PATCH",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
+            **kwargs)
+
+    async def graph_edge_replace(self, graph_name, collection_name, edge_key, **kwargs):
+        return await self._session.request(
+            "PUT",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
+            **kwargs)
+
+    async def graph_edge_delete(self, graph_name, collection_name, edge_key, **kwargs):
+        return await self._session.request(
+            "DELETE",
+            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
+            **kwargs)
 
     async def foxx_configuration(self, **kwargs):
         return await self._session.request(
@@ -169,83 +242,6 @@ class ArangoClient:
         return await self._session.request(
             "GET", f"{self._url_prefix}/_api/endpoint", **kwargs)
 
-    async def graph(self, graph_name, **kwargs):
-        return await self._session.request(
-            "GET", f"{self._url_prefix}/_api/gharial/{graph_name}", **kwargs)
-
-    async def graph_create(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self._url_prefix}/_api/gharial", **kwargs)
-
-    async def graph_delete(self, graph_name, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self._url_prefix}/_api/gharial/{graph_name}", **kwargs)
-
-    async def graph_vertex(self, graph_name, collection_name, vertex_key, **kwargs):
-        return await self._session.request(
-            "GET",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-            **kwargs)
-
-    async def graph_vertex_add(self, graph_name, **kwargs):
-        return await self._session.request(
-            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/vertex", **kwargs)
-
-    async def graph_vertex_delete(self, graph_name, collection_name, vertex_key, **kwargs):
-        return await self._session.request(
-            "DELETE",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-            **kwargs)
-
-    async def graph_edge(self, graph_name, collection_name, edge_key, **kwargs):
-        return await self._session.request(
-            "GET",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-            **kwargs)
-
-    async def graph_edge_add(self, graph_name, **kwargs):
-        return await self._session.request(
-            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/edge", **kwargs)
-
-    async def graph_edge_replace(self, graph_name, collection_name, edge_key, **kwargs):
-        return await self._session.request(
-            "PUT",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-            **kwargs)
-
-    async def graph_edge_delete(self, graph_name, collection_name, edge_key, **kwargs):
-        return await self._session.request(
-            "DELETE",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-            **kwargs)
-
-    async def graph_edge_create(self, graph_name, collection_name, **kwargs):
-        return await self._session.request(
-            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}",
-            **kwargs)
-
-    async def graph_edge_update(self, graph_name, collection_name, edge_key, **kwargs):
-        return await self._session.request(
-            "PATCH",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-            **kwargs)
-
-    async def graph_vertex_create(self, graph_name, collection_name, **kwargs):
-        return await self._session.request(
-            "POST", f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}",
-            **kwargs)
-
-    async def graph_vertex_update(self, graph_name, collection_name, vertex_key, **kwargs):
-        return await self._session.request(
-            "PATCH",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-            **kwargs)
-
-    async def graph_vertex_replace(self, graph_name, collection_name, vertex_key, **kwargs):
-        return await self._session.request(
-            "PUT",
-            f"{self._url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-            **kwargs)
 
     async def user(self, **kwargs):
         return await self._session.request(
@@ -530,13 +526,25 @@ class ArangoClient:
         return await self._session.request(
             "GET", f"{self._url_prefix}/_api/edges/{collection_id}", **kwargs)
 
-    async def collection_load(self, collection_name, **kwargs):
+    async def collection(self, exclude_system=None):
+        excl_sys = 0 if exclude_system is None else 1
         return await self._session.request(
-            "PUT", f"{self._url_prefix}/_api/collection/{collection_name}/load", **kwargs)
+            "GET",
+            f"{self._url_prefix}/_api/collection",
+            params={'excludeSystem': excl_sys})
 
-    async def collection_unload(self, collection_name, **kwargs):
+    async def collection_load(self, collection_name, *, count=None, type=None):
+        json = {'count': True if count is None else count}
+        if type in [2, 3] or type == [2, 3]:
+            json['type'] = type
+        print(json)
+        pprint(vars(self))
         return await self._session.request(
-            "PUT", f"{self._url_prefix}/_api/collection/{collection_name}/unload", **kwargs)
+            "PUT", f"{self._url_prefix}/_api/collection/{collection_name}/load", json=json)
+
+    async def collection_unload(self, collection_name):
+        return await self._session.request(
+            "PUT", f"{self._url_prefix}/_api/collection/{collection_name}/unload")
 
     async def collection_load_indexes_into_memory(self, collection_name, **kwargs):
         return await self._session.request(
@@ -557,9 +565,6 @@ class ArangoClient:
         return await self._session.request(
             "PUT", f"{self._url_prefix}/_api/collection/{collection_name}/rotate", **kwargs)
 
-    async def collection(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self._url_prefix}/_api/collection", **kwargs)
 
     async def collection_properties_get(self, collection_name, **kwargs):
         return await self._session.request(

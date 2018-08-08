@@ -2,6 +2,7 @@
 # created: 04.07.18
 # Author: Tim "tjtimer" Jedro
 # Email: tjtimer@gmail.com
+from pprint import pprint
 
 from aio_arango.client import ArangoClient
 
@@ -18,8 +19,8 @@ async def test_client_login(client, credentials):
     print(*credentials, resp)
     assert client._auth_token == resp['jwt']
 
-async def test_client_user_get(auth_client):
-    response = await auth_client.user_get('testuwe')
+async def test_client_user_get(user_client):
+    response = await user_client.user_get('testuwe')
     assert response.status < 300
     user = await response.json()
     print(user)
@@ -43,3 +44,59 @@ async def test_client_user_delete(root_client, client):
     assert 'Wrong credentials' in resp['errorMessage']
     print(data)
     assert isinstance(data, dict)
+
+
+async def test_client_collection_get_no_params(root_client):
+    response = await root_client.collection()
+    assert response.status < 300
+    collections = await response.json()
+    print('collections without params')
+    pprint(collections)
+    assert isinstance(collections, dict)
+
+
+async def test_client_collection_get_with_params(root_client):
+    response = await root_client.collection(exclude_system=0)
+    assert response.status < 300
+    collections = (await response.json())['result']
+    print('collections with params')
+    pprint(collections)
+    assert isinstance(collections, list)
+
+
+async def test_client_collection_load_no_kwargs(user_client):
+    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
+    response = await user_client.collection_load('account')
+    assert response.status < 300
+    data = await response.json()
+    print('collection_load')
+    pprint(data)
+    assert data['name'] == 'account'
+    assert data['isSystem'] is False
+    assert 'count' in data.keys()
+
+
+async def test_client_collection_unload(user_client):
+    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
+    response = await user_client.collection_unload('account')
+    assert response.status < 300
+    data = await response.json()
+    print('collection_unload')
+    pprint(data)
+    assert data['name'] == 'account'
+
+async def test_client_collection_load_with_kwargs(user_client):
+    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
+    response = await user_client.collection_load(
+        'worksAt',
+        count=False
+    )
+    pprint(response.request_info)
+    assert response.status < 300
+    data = await response.json()
+    print('collection_load count: 0')
+    pprint(data)
+    assert data['name'] == 'worksAt'
+    assert data['isSystem'] is False
+    assert 'count' not in data.keys()
+    await user_client.collection_unload('worksAt')

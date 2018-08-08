@@ -6,6 +6,7 @@ import pytest
 
 from aio_arango.client import ArangoClient
 
+
 # pytest_plugins = 'aiohttp.pytest_plugin'
 
 @pytest.fixture
@@ -19,15 +20,15 @@ async def client(loop):
     await cl.close()
 
 @pytest.fixture(scope="function")
-async def auth_client(credentials, loop):
+async def user_client(credentials, loop):
     cl = ArangoClient(address=('localhost', 8529), loop=loop)
     await cl.login(*credentials)
     yield cl
     await cl.close()
 
 
-@pytest.fixture
-async def root_client(credentials, loop):
+@pytest.fixture(scope="function")
+async def root_client(loop):
     cl = ArangoClient(address=('localhost', 8529), loop=loop)
     await cl.login('testroot', 'testpw')
     yield cl
