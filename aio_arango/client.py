@@ -123,16 +123,16 @@ class ArangoClient:
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/user/", **kwargs)
 
-    async def edges(self, collection_id, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/edges/{collection_id}", **kwargs)
-
     async def collection(self, exclude_system=None):
         excl_sys = 0 if exclude_system is None else 1
         return await self._session.request(
             "GET",
             f"{self.url_prefix}/_api/collection",
             params={'excludeSystem': excl_sys})
+
+    async def collection_create(self, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_api/collection", **kwargs)
 
     async def collection_load(self, collection_name, *, count=None, type=None):
         json = {'count': True if count is None else count}
@@ -155,6 +155,11 @@ class ArangoClient:
 
     async def collection_properties(self, collection_name, **kwargs):
         return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
+            **kwargs)
+
+    async def collection_properties_update(self, collection_name, **kwargs):
+        return await self._session.request(
             "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
             **kwargs)
 
@@ -165,11 +170,6 @@ class ArangoClient:
     async def collection_rotate(self, collection_name, **kwargs):
         return await self._session.request(
             "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/rotate", **kwargs)
-
-    async def collection_properties_get(self, collection_name, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
-            **kwargs)
 
     async def collection_count(self, collection_name, **kwargs):
         return await self._session.request(
@@ -189,18 +189,42 @@ class ArangoClient:
             "GET", f"{self.url_prefix}/_api/collection/{collection_name}/checksum",
             **kwargs)
 
-    async def collection_create(self, **kwargs):
+    async def collection_truncate(self, collection_name, **kwargs):
         return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/collection", **kwargs)
+            "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/truncate",
+            **kwargs)
 
     async def collection_delete(self, collection_name, **kwargs):
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_api/collection/{collection_name}", **kwargs)
 
-    async def collection_truncate(self, collection_name, **kwargs):
+    async def document(self, document_handle, **kwargs):
         return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/truncate",
-            **kwargs)
+            "GET", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def document_head(self, document_handle, **kwargs):
+        return await self._session.request(
+            "HEAD", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def document_create(self, document_handle, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def document_update(self, document_handle, **kwargs):
+        return await self._session.request(
+            "PATCH", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def document_replace(self, document_handle, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def document_delete(self, document_handle, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
+
+    async def edges(self, collection_id, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/edges/{collection_id}", **kwargs)
 
     async def graph(self, graph_name, **kwargs):
         return await self._session.request(
@@ -277,34 +301,6 @@ class ArangoClient:
             f"{self.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
             **kwargs)
 
-    async def query(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/query", **kwargs)
-
-    async def query_properties(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/query/properties", **kwargs)
-
-    async def query_properties_change(self, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/query/properties", **kwargs)
-
-    async def query_current(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/query/current", **kwargs)
-
-    async def query_slow(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/query/slow", **kwargs)
-
-    async def query_slow_delete(self, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/query/slow", **kwargs)
-
-    async def query_delete(self, query_id, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/query/{query_id}", **kwargs)
-
     async def cursor(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_api/cursor", **kwargs)
@@ -316,46 +312,6 @@ class ArangoClient:
     async def cursor_delete(self, cursor_identifier, **kwargs):
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
-
-    async def batch(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/batch", **kwargs)
-
-    async def aqlfunction(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/aqlfunction", **kwargs)
-
-    async def aqlfunction_delete(self, name, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/aqlfunction/{name}", **kwargs)
-
-    async def aqlfunction_get(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/aqlfunction", **kwargs)
-
-    async def document(self, document_handle, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
-
-    async def document_head(self, document_handle, **kwargs):
-        return await self._session.request(
-            "HEAD", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
-
-    async def document_create(self, document_handle, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
-
-    async def document_replace(self, document_handle, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
-
-    async def document_update(self, document_handle, **kwargs):
-        return await self._session.request(
-            "PATCH", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
-
-    async def document_delete(self, document_handle, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/document/{document_handle}", **kwargs)
 
     async def import_document(self, **kwargs):
         return await self._session.request(
@@ -389,25 +345,49 @@ class ArangoClient:
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/job/{type}", **kwargs)
 
-    async def endpoint(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/endpoint", **kwargs)
-
     async def traversal(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_api/traversal", **kwargs)
 
-    async def properties(self, **kwargs):
+    async def query(self, **kwargs):
         return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/query_cache/properties", **kwargs)
+            "POST", f"{self.url_prefix}/_api/query", **kwargs)
 
-    async def properties_all(self, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/query_cache/properties", **kwargs)
-
-    async def explain(self, **kwargs):
+    async def query_explain(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_api/explain", **kwargs)
+
+    async def query_properties(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/query/properties", **kwargs)
+
+    async def query_properties_change(self, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_api/query/properties", **kwargs)
+
+    async def query_current(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/query/current", **kwargs)
+
+    async def query_slow(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/query/slow", **kwargs)
+
+    async def query_slow_delete(self, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self.url_prefix}/_api/query/slow", **kwargs)
+
+    async def query_delete(self, query_id, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self.url_prefix}/_api/query/{query_id}", **kwargs)
+
+    async def query_cache_properties(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/query-cache/properties", **kwargs)
+
+    async def query_cache_properties_update(self, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_api/query-cache/properties", **kwargs)
 
     async def tasks(self, id, **kwargs):
         return await self._session.request(
@@ -492,6 +472,22 @@ class ArangoClient:
     async def index_delete(self, index_handle, **kwargs):
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_api/index/{index_handle}", **kwargs)
+
+    async def batch(self, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_api/batch", **kwargs)
+
+    async def aqlfunction(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/aqlfunction", **kwargs)
+
+    async def aqlfunction_create(self, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_api/aqlfunction", **kwargs)
+
+    async def aqlfunction_delete(self, name, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self.url_prefix}/_api/aqlfunction/{name}", **kwargs)
 
     # root user only!
     async def shutdown(self, **kwargs):
