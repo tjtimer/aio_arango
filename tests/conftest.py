@@ -33,7 +33,7 @@ async def user_client(credentials, loop):
 async def db_client(credentials, db_name, loop):
     cl = ArangoClient(address=('localhost', 8529), loop=loop)
     await cl.login(*credentials)
-    cl.db = db_name
+    cl.db_name = db_name
     yield cl
     await cl.close()
 
