@@ -64,9 +64,8 @@ async def test_client_collection_get_with_params(root_client):
     assert isinstance(collections, list)
 
 
-async def test_client_collection_load_no_kwargs(user_client):
-    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
-    response = await user_client.collection_load('account')
+async def test_client_collection_load_no_kwargs(db_client):
+    response = await db_client.collection_load('account')
     assert response.status < 300
     data = await response.json()
     print('collection_load')
@@ -76,27 +75,25 @@ async def test_client_collection_load_no_kwargs(user_client):
     assert 'count' in data.keys()
 
 
-async def test_client_collection_unload(user_client):
-    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
-    response = await user_client.collection_unload('account')
+async def test_client_collection_unload(db_client):
+    response = await db_client.collection_unload('account')
     assert response.status < 300
     data = await response.json()
     print('collection_unload')
     pprint(data)
     assert data['name'] == 'account'
 
-async def test_client_collection_load_with_kwargs(user_client):
-    user_client._url_prefix = f'{user_client._url_prefix }/_db/test-db'
-    response = await user_client.collection_load(
+async def test_client_collection_load_with_kwargs(db_client):
+    response = await db_client.collection_load(
         'worksAt',
         count=False
     )
     pprint(response.request_info)
     assert response.status < 300
     data = await response.json()
-    print('collection_load count: 0')
+    print('collection_load count: False')
     pprint(data)
     assert data['name'] == 'worksAt'
     assert data['isSystem'] is False
     assert 'count' not in data.keys()
-    await user_client.collection_unload('worksAt')
+    await db_client.collection_unload('worksAt')

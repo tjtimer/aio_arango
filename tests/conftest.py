@@ -7,11 +7,13 @@ import pytest
 from aio_arango.client import ArangoClient
 
 
-# pytest_plugins = 'aiohttp.pytest_plugin'
-
 @pytest.fixture
 def credentials():
     return ('testuwe', 'testuwe')
+
+@pytest.fixture
+def db_name():
+    return 'test-db'
 
 @pytest.fixture(scope="function")
 async def client(loop):
@@ -23,6 +25,15 @@ async def client(loop):
 async def user_client(credentials, loop):
     cl = ArangoClient(address=('localhost', 8529), loop=loop)
     await cl.login(*credentials)
+    yield cl
+    await cl.close()
+
+
+@pytest.fixture(scope="function")
+async def db_client(credentials, db_name, loop):
+    cl = ArangoClient(address=('localhost', 8529), loop=loop)
+    await cl.login(*credentials)
+    cl.db = db_name
     yield cl
     await cl.close()
 
