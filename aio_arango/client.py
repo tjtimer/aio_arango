@@ -11,10 +11,10 @@ import aiohttp
 
 class ArangoClient:
     def __init__(self,
-                 address: typing.Tuple[str, int]=None,
-                 path: str=None,
+                 address: typing.Tuple[str, int] = None,
+                 path: str = None,
                  db_name: str = None,
-                 loop: asyncio.AbstractEventLoop=None):
+                 loop: asyncio.AbstractEventLoop = None):
         if loop is None:
             loop = asyncio.get_event_loop()
         if path is None:
@@ -46,10 +46,10 @@ class ArangoClient:
         self._session = aiohttp.ClientSession(
             connector=self._connector)
         resp = await self._session.request(
-                'POST',
-                self.url_prefix + '/_open/auth',
-                json={'username': username, 'password': password}
-        )
+            'POST',
+            self.url_prefix + '/_open/auth',
+            json={'username': username, 'password': password}
+            )
         data = await resp.json()
         if resp.status < 300:
             self._auth_token = data['jwt']
@@ -152,22 +152,6 @@ class ArangoClient:
         return await self._session.request(
             "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/unload")
 
-    async def collection_load_indexes_into_memory(self, collection_name, **kwargs):
-        return await self._session.request(
-            "PUT",
-            f"{self.url_prefix}/_api/collection/{collection_name}/loadIndexesIntoMemory",
-            **kwargs)
-
-    async def collection_properties(self, collection_name, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
-            **kwargs)
-
-    async def collection_properties_update(self, collection_name, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
-            **kwargs)
-
     async def collection_rename(self, collection_name, **kwargs):
         return await self._session.request(
             "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/rename", **kwargs)
@@ -199,9 +183,25 @@ class ArangoClient:
             "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/truncate",
             **kwargs)
 
+    async def collection_load_indexes_into_memory(self, collection_name, **kwargs):
+        return await self._session.request(
+            "PUT",
+            f"{self.url_prefix}/_api/collection/{collection_name}/loadIndexesIntoMemory",
+            **kwargs)
+
     async def collection_delete(self, collection_name, **kwargs):
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_api/collection/{collection_name}", **kwargs)
+
+    async def collection_properties(self, collection_name, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
+            **kwargs)
+
+    async def collection_properties_update(self, collection_name, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_api/collection/{collection_name}/properties",
+            **kwargs)
 
     async def document(self, document_handle, **kwargs):
         return await self._session.request(
@@ -236,9 +236,9 @@ class ArangoClient:
             "GET", f"{self.url_prefix}/_api/gharial/{graph_name}", **kwargs)
 
     async def graph_create(self, *,
-                           name: str=None, edge_def: dict=None,
-                           orph: list=None):
-        json={'name': name, 'edgeDefinition': edge_def}
+                           name: str = None, edge_def: dict = None,
+                           orph: list = None):
+        json = {'name': name, 'edgeDefinition': edge_def}
         if isinstance(orph, list):
             json['orphanCollections'] = orph
         return await self._session.request(
@@ -499,17 +499,29 @@ class ArangoClient:
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_admin/shutdown", **kwargs)
 
+    async def log(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_admin/log", **kwargs)
+
+    async def log_level(self, **kwargs):
+        return await self._session.request(
+            "GET", f"{self.url_prefix}/_admin/log/level", **kwargs)
+
+    async def log_level_update(self, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_admin/log/level", **kwargs)
+
     async def test(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_admin/test", **kwargs)
 
-    async def execute(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_admin/execute", **kwargs)
-
     async def echo(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/echo", **kwargs)
+
+    async def execute(self, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_admin/execute", **kwargs)
 
     async def status(self, **kwargs):
         return await self._session.request(
@@ -535,64 +547,67 @@ class ArangoClient:
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/wal/transactions", **kwargs)
 
-    async def log(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_admin/log", **kwargs)
-
-    async def log_level(self, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_admin/log/level", **kwargs)
-
-    async def log_level_update(self, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_admin/log/level", **kwargs)
 
     async def routing_reload(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_admin/routing/reload", **kwargs)
 
+
     async def statistics(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/statistics", **kwargs)
+
 
     async def _get(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/statistics-description", **kwargs)
 
+
     async def server_role(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/server/role", **kwargs)
+
 
     async def server_id(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/server/id", **kwargs)
 
+
     async def server_availability(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/server/availability", **kwargs)
+
 
     async def cluster_statistics(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/clusterStatistics", **kwargs)
 
+
     async def cluster_endpoints(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/cluster/endpoints", **kwargs)
+
 
     async def cluster_health(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_admin/cluster/health", **kwargs)
 
+
     async def cluster_check_port(self, **kwargs):
         return await self._session.request(
-            "GET", f"{self.url_prefix}/_admin/clusterCheckPort", **kwargs)
+            "GET",
+            f"{self.url_prefix}/_admin/clusterCheckPort",
+            **kwargs)
 
-    async def cluster_test(self, method, json:dict=None):
+
+    async def cluster_test(self, method, json: dict = None):
         if json is None:
             json = {'key': 'value'}
         return await self._session.request(
-            method, f"{self.url_prefix}/_admin/cluster-test", dict)
+            method, f"{self.url_prefix}/_admin/cluster-test", json=json)
 
+
+"""
     async def replication(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/replication/applier-state", **kwargs)
@@ -629,7 +644,6 @@ class ArangoClient:
         return await self._session.request(
             "PUT", f"{self.url_prefix}/_api/replication/make-slave", **kwargs)
 
-"""
     async def foxx(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/foxx", **kwargs)
