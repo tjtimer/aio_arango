@@ -80,48 +80,53 @@ class ArangoClient:
         return await self._session.request(
             "DELETE", f"{self.url_prefix}/_api/database/{database_name}", **kwargs)
 
-    async def user(self, **kwargs):
-        return await self._session.request(
-            "POST", f"{self.url_prefix}/_api/user", **kwargs)
-
-    async def user_database(self, user, dbname, collection, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/user/{user}/database/{dbname}/{collection}",
-            **kwargs)
-
-    async def user_database_delete(self, user, dbname, collection, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/user/{user}/database/{dbname}/{collection}",
-            **kwargs)
-
-    async def user_database_list(self, user, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/user/{user}/database/", **kwargs)
-
-    async def user_database_get(self, user, database, collection, **kwargs):
-        return await self._session.request(
-            "GET", f"{self.url_prefix}/_api/user/{user}/database/{database}/{collection}",
-            **kwargs)
-
-    async def user_replace(self, user, **kwargs):
-        return await self._session.request(
-            "PUT", f"{self.url_prefix}/_api/user/{user}", **kwargs)
-
-    async def user_update(self, user, **kwargs):
-        return await self._session.request(
-            "PATCH", f"{self.url_prefix}/_api/user/{user}", **kwargs)
-
-    async def user_delete(self, user, **kwargs):
-        return await self._session.request(
-            "DELETE", f"{self.url_prefix}/_api/user/{user}", **kwargs)
-
-    async def user_get(self, user, **kwargs):
+    async def user(self, user, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/user/{user}", **kwargs)
 
     async def user_list(self, **kwargs):
         return await self._session.request(
             "GET", f"{self.url_prefix}/_api/user/", **kwargs)
+
+    async def user_create(self, **kwargs):
+        return await self._session.request(
+            "POST", f"{self.url_prefix}/_api/user", **kwargs)
+
+    async def user_update(self, user, **kwargs):
+        return await self._session.request(
+            "PATCH", f"{self.url_prefix}/_api/user/{user}", **kwargs)
+
+    async def user_replace(self, user, **kwargs):
+        return await self._session.request(
+            "PUT", f"{self.url_prefix}/_api/user/{user}", **kwargs)
+
+    async def user_delete(self, user, **kwargs):
+        return await self._session.request(
+            "DELETE", f"{self.url_prefix}/_api/user/{user}", **kwargs)
+
+    async def user_database(self, user, database, collection, **kwargs):
+        return await self._session.request(
+            "GET",
+            f"{self.url_prefix}/_api/user/{user}/database/{database}/{collection}",
+            **kwargs)
+
+    async def user_database_list(self, user, **kwargs):
+        return await self._session.request(
+            "GET",
+            f"{self.url_prefix}/_api/user/{user}/database/",
+            **kwargs)
+
+    async def user_database_change(self, user, dbname, collection, **kwargs):
+        return await self._session.request(
+            "PUT",
+            f"{self.url_prefix}/_api/user/{user}/database/{dbname}/{collection}",
+            **kwargs)
+
+    async def user_database_delete(self, user, dbname, collection, **kwargs):
+        return await self._session.request(
+            "DELETE",
+            f"{self.url_prefix}/_api/user/{user}/database/{dbname}/{collection}",
+            **kwargs)
 
     async def collection(self, exclude_system=None):
         excl_sys = 0 if exclude_system is None else 1
