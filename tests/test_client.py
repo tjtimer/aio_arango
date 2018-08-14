@@ -16,7 +16,6 @@ async def test_client_login(client, credentials):
     resp = await client.login(*credentials)
     assert resp not in [None, '']
     assert 'errorMessage' not in resp.keys(), resp['errorMessage']
-    print(*credentials, resp)
     assert client._auth_token == resp['jwt']
 
 async def test_client_user_get(user_client):

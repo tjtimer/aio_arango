@@ -1,14 +1,14 @@
-async def cursor(client, **kwargs):
+async def fetch(client, **kwargs):
     return await client._session.request(
         "POST", f"{client.url_prefix}/_api/cursor", **kwargs)
 
 
-async def cursor_next(client, cursor_identifier, **kwargs):
+async def next(client, cursor_identifier, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
 
 
-async def cursor_delete(client, cursor_identifier, **kwargs):
+async def delete(client, cursor_identifier, **kwargs):
     return await client._session.request(
         "DELETE", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
 

@@ -1,28 +1,29 @@
 from typing import Iterator
 
 
-async def list(client, **kwargs):
+async def list(client):
     return await client._session.request(
-        'GET', f'{client.url_prefix}/_api/database', **kwargs)
+        'GET', f'{client.url_prefix}/_api/database')
 
-async def list_for_user(client, **kwargs):
+async def list_for_user(client, user):
     return await client._session.request(
-        'GET', f'{client.url_prefix}/_api/database/user', **kwargs)
+        'GET',
+        f'{client.url_prefix}/_api/user/{user}/database/')
 
-async def current(client, **kwargs):
+async def current(client):
     return await client._session.request(
-        'GET', f'{client.url_prefix}/_api/database/current', **kwargs)
+        'GET', f'{client.url_prefix}/_api/database/current')
 
-async def create(client, name: str, *, users: Iterator=None, **kwargs):
+async def create(client, name: str, *, users: Iterator=None):
     json = {'name': name}
     if isinstance(users, Iterator):
         json['users'] = list(*users)
     return await client._session.request(
         'POST', f'{client.url_prefix}/_api/database', json=json)
 
-async def delete(client, name: str, **kwargs):
+async def delete(client, name: str):
     return await client._session.request(
-        'DELETE', f'{client.url_prefix}/_api/database/{name}', **kwargs)
+        'DELETE', f'{client.url_prefix}/_api/database/{name}')
 
 async def collection_list(client, exclude_system: bool=None):
     return await client._session.request(
@@ -30,9 +31,9 @@ async def collection_list(client, exclude_system: bool=None):
         f'{client.url_prefix}/_api/collection',
         params={'excludeSystem': bool(exclude_system)})
 
-async def collection_create(client, **kwargs):
+async def collection_create(client, json: dict):
     return await client._session.request(
-        'POST', f'{client.url_prefix}/_api/collection', **kwargs)
+        'POST', f'{client.url_prefix}/_api/collection', json=json)
 
 async def collection_load(client, name, *, count=None, type=None):
     json = {'count': bool(count)}
@@ -96,7 +97,6 @@ async def collection_load_indexes(client, name, **kwargs):
         f'{client.url_prefix}/_api/collection/{name}/loadIndexesIntoMemory',
         **kwargs)
 
-
 async def document(client, handle, **kwargs):
     return await client._session.request(
         'GET', f'{client.url_prefix}/_api/document/{handle}', **kwargs)
@@ -136,3 +136,68 @@ async def index_delete(client, index_handle, **kwargs):
     return await client._session.request(
         'DELETE', f'{client.url_prefix}/_api/index/{index_handle}', **kwargs)
 
+async def import_document(client, **kwargs):
+    return await client._session.request(
+        'POST', f'{client.url_prefix}/_api/import#document', **kwargs)
+
+
+async def import_json(client, **kwargs):
+    return await client._session.request(
+        'POST', f'{client.url_prefix}/_api/import#json', **kwargs)
+
+
+async def export(client, **kwargs):
+    return await client._session.request(
+        'POST', f'{client.url_prefix}/_api/export', **kwargs)
+
+
+async def user(client, user, **kwargs):
+    return await client._session.request(
+        'GET', f'{client.url_prefix}/_api/user/{user}', **kwargs)
+
+
+async def user_list(client, **kwargs):
+    return await client._session.request(
+        'GET', f'{client.url_prefix}/_api/user/', **kwargs)
+
+
+async def user_create(client, **kwargs):
+    return await client._session.request(
+        'POST', f'{client.url_prefix}/_api/user', **kwargs)
+
+
+async def user_update(client, user, **kwargs):
+    return await client._session.request(
+        'PATCH', f'{client.url_prefix}/_api/user/{user}', **kwargs)
+
+
+async def user_replace(client, user, **kwargs):
+    return await client._session.request(
+        'PUT', f'{client.url_prefix}/_api/user/{user}', **kwargs)
+
+
+async def user_delete(client, user, **kwargs):
+    return await client._session.request(
+        'DELETE', f'{client.url_prefix}/_api/user/{user}', **kwargs)
+
+
+async def user_database(client, user, database, collection, **kwargs):
+    return await client._session.request(
+        'GET',
+        f'{client.url_prefix}/_api/user/{user}/database/{database}/{collection}',
+        **kwargs)
+
+
+
+async def user_access_update(client, user, db_name, collection, **kwargs):
+    return await client._session.request(
+        'PUT',
+        f'{client.url_prefix}/_api/user/{user}/database/{db_name}/{collection}',
+        **kwargs)
+
+
+async def user_access_clear(client, user, db_name, collection, **kwargs):
+    return await client._session.request(
+        'DELETE',
+        f'{client.url_prefix}/_api/user/{user}/database/{db_name}/{collection}',
+        **kwargs)

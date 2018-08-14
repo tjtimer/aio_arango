@@ -18,6 +18,21 @@ async def log_level_update(client, **kwargs):
         "PUT", f"{client.url_prefix}/_admin/log/level", **kwargs)
 
 
+async def aqlfunction(client, **kwargs):
+    return await client._session.request(
+        'GET', f'{client.url_prefix}/_api/aqlfunction', **kwargs)
+
+
+async def aqlfunction_create(client, **kwargs):
+    return await client._session.request(
+        'POST', f'{client.url_prefix}/_api/aqlfunction', **kwargs)
+
+
+async def aqlfunction_delete(client, name, **kwargs):
+    return await client._session.request(
+        'DELETE', f'{client.url_prefix}/_api/aqlfunction/{name}', **kwargs)
+
+
 async def test(client, **kwargs):
     return await client._session.request(
         "POST", f"{client.url_prefix}/_admin/test", **kwargs)
@@ -41,30 +56,6 @@ async def status(client, **kwargs):
 async def time(client, **kwargs):
     return await client._session.request(
         "GET", f"{client.url_prefix}/_admin/time", **kwargs)
-
-async def aqlfunction(client, **kwargs):
-    return await client._session.request(
-        "GET", f"{client.url_prefix}/_api/aqlfunction", **kwargs)
-
-async def aqlfunction_create(client, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/aqlfunction", **kwargs)
-
-async def aqlfunction_delete(client, name, **kwargs):
-    return await client._session.request(
-        "DELETE", f"{client.url_prefix}/_api/aqlfunction/{name}", **kwargs)
-
-async def import_document(client, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/import#document", **kwargs)
-
-async def import_json(client, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/import#json", **kwargs)
-
-async def export(client, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/export", **kwargs)
 
 async def job(client, job_id, **kwargs):
     return await client._session.request(

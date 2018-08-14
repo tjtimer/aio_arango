@@ -6,6 +6,7 @@ import math
 
 import pytest
 
+from aio_arango import database as db
 from aio_arango.client import ArangoClient
 
 
@@ -68,9 +69,12 @@ async def root_client(loop):
 
 
 @pytest.fixture(scope="function")
-async def db_client(root_client, user_client, db_name, loop):
-    cl = ArangoClient(address=('localhost', 8529), loop=loop)
-    await cl.login(*credentials)
-    cl.db_name = db_name
-    yield cl
-    await cl.close()
+async def db_client(root_client, user_client):
+    await db.create(
+        root_client,
+        name='fixture-db',
+        users=[{'name':'testuwe', 'passwd':'testuwe'}]
+    )
+    user_client.db_name = 'fixture-db'
+    yield user_client
+    await user_client.close()
