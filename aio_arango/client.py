@@ -82,10 +82,13 @@ class ArangoClient:
             "POST", f"{self.url_prefix}/_api/traversal", **kwargs)
 
     async def query(self, query: str, *,
+                    id: Optional[str, int]=None,
                     size: Optional[int]=None,
                     count: Optional[int, QueryOption]=None):
         config = {'json': {'query': query}}
         endpoint = ('POST', "/_api/cursor")
+        if id:
+            endpoint = (endpoint[0], f"{endpoint[1]}/{id}")
         if size is None and count is None:
             return await self._request(endpoint, config)
         if count is QueryOption.COUNT:
