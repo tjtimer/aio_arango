@@ -14,10 +14,10 @@ async def current(client):
     return await client._session.request(
         'GET', f'{client.url_prefix}/_api/database/current')
 
-async def create(client, name: str, *, users: Iterator=None):
+async def create(client, name: str, *, users: Iterator<dict>=None):
     json = {'name': name}
     if isinstance(users, Iterator):
-        json['users'] = list(*users)
+        json['users'] = [*users]
     return await client._session.request(
         'POST', f'{client.url_prefix}/_api/database', json=json)
 

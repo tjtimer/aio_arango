@@ -2,37 +2,44 @@
 # created: 01.07.18
 # Author: Tim "tjtimer" Jedro
 # Email: tjtimer@gmail.com
-import asyncio
-import typing
+import enum
+from typing import Optional, Tuple
 
 import aiohttp
 
 
+class ClientError(Exception):
+    pass
+
+
+class QueryOption(enum.Enum):
+    COUNT = 1
+    FULL_COUNT = 2
+
+
 class ArangoClient:
     def __init__(self,
-                 address: typing.Tuple[str, int] = None,
-                 path: str = None,
-                 db_name: str = None,
-                 loop: asyncio.AbstractEventLoop = None):
-        if loop is None:
-            loop = asyncio.get_event_loop()
+                 address: Optional[Tuple, list][str, int] = None,
+                 path: Optional[str] = None,
+                 db_name: Optional[str] = None,
+                 scheme: Optional[str]=None):
         if path is None:
-            con = aiohttp.TCPConnector(loop=loop)
+            con = aiohttp.TCPConnector()
             if address is None:
                 address = ('localhost', 8529)
-            self._address = address
-            self._url_prefix = f'http://{address[0]}:{address[1]}'
+            self._address = (*address, scheme)
+            self._url_prefix = f'{scheme}://{address[0]}:{address[1]}'
             self._path = None
         else:
-            con = aiohttp.UnixConnector(path=path, loop=loop)
+            con = aiohttp.UnixConnector(path=path)
             self._path = path
             self._address = None
             self._url_prefix = ''
-        self._loop = loop
         self._connector = con
         self._auth_token = None
-        self._session = None
         self.headers = {'Content-Type': 'application/json'}
+        self._session = aiohttp.ClientSession(
+            connector=self._connector)
         self.db_name = db_name
 
     @property
@@ -41,20 +48,27 @@ class ArangoClient:
             return self._url_prefix
         return f'{self._url_prefix}/_db/{self.db_name}'
 
+    async def _request(self, endpoint: tuple[str, str], config: dict=None)->dict:
+        cfg = config or {}
+        return await self._session.request(
+            endpoint[0],
+            self.url_prefix + endpoint[1],
+            **cfg
+        )
+
     async def login(self, username: str, password: str):
-        self._session = aiohttp.ClientSession(
-            connector=self._connector)
-        resp = await self._session.request(
-            'POST',
-            self.url_prefix + '/_open/auth',
-            json={'username': username, 'password': password}
+        resp = await self._request(
+            ('POST', '/_open/auth'),
+            config={'json': {'username': username, 'password': password}}
             )
         data = await resp.json()
         if resp.status < 300:
             self._auth_token = data['jwt']
             self.headers['Authorization'] = f'bearer {self._auth_token}'
-            self._session._default_headers.update(**self.headers)
         return data
+
+    async def stream(self):
+        pass
 
     async def close(self):
         await self._session.close()
@@ -66,6 +80,21 @@ class ArangoClient:
     async def traversal(self, **kwargs):
         return await self._session.request(
             "POST", f"{self.url_prefix}/_api/traversal", **kwargs)
+
+    async def query(self, query: str, *,
+                    size: Optional[int]=None,
+                    count: Optional[int, QueryOption]=None):
+        config = {'json': {'query': query}}
+        endpoint = ('POST', "/_api/cursor")
+        if size is None and count is None:
+            return await self._request(endpoint, config)
+        if count is QueryOption.COUNT:
+            config['json']['count'] = True
+        if count is QueryOption.FULL_COUNT:
+            config['json']['fullCount'] = True
+        if size:
+            config['json']['batchSize'] = size
+        return await self._request(endpoint, config)
 
     async def transaction(self, **kwargs):
         return await self._session.request(
