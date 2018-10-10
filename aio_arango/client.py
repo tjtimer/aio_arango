@@ -1,4 +1,4 @@
-# aio_arango client
+    # aio_arango client
 # created: 01.07.18
 # Author: Tim "tjtimer" Jedro
 # Email: tjtimer@gmail.com
@@ -15,6 +15,20 @@ class ClientError(Exception):
 class QueryOption(enum.Enum):
     COUNT = 1
     FULL_COUNT = 2
+
+
+async def init_session(path: Optional[str]=None)->aiohttp.ClientSession:
+    if path is None:
+        connector = aiohttp.TCPConnector()
+    else:
+        connector = aiohttp.UnixConnector(path=path)
+    return aiohttp.ClientSession(connector=connector)
+
+
+async def login(session: aiohttp.ClientSession, username: str, password: str)->str:
+    resp = await session.post('/_open/auth', json={'username': username, 'password': password})
+    jwt = (await resp.json())['jwt']
+    return jwt
 
 
 class ArangoClient:
@@ -48,13 +62,14 @@ class ArangoClient:
             return self._url_prefix
         return f'{self._url_prefix}/_db/{self.db_name}'
 
-    async def _request(self, endpoint: tuple[str, str], config: dict=None)->dict:
+    async def _request(self, endpoint: tuple[str, str], config: dict=None)->aiohttp.ClientResponse:
         cfg = config or {}
-        return await self._session.request(
+        response = await self._session.request(
             endpoint[0],
             self.url_prefix + endpoint[1],
             **cfg
         )
+        return response
 
     async def login(self, username: str, password: str):
         resp = await self._request(

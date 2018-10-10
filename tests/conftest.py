@@ -47,11 +47,13 @@ def documents():
 def db_name():
     return 'test-db'
 
+
 @pytest.fixture(scope="function")
 async def client(loop):
     cl = ArangoClient(address=('localhost', 8529), loop=loop)
     yield cl
     await cl.close()
+
 
 @pytest.fixture(scope="function")
 async def user_client(credentials, loop):
@@ -59,6 +61,7 @@ async def user_client(credentials, loop):
     await cl.login(*credentials)
     yield cl
     await cl.close()
+
 
 @pytest.fixture(scope="function")
 async def root_client(loop):
