@@ -17,20 +17,6 @@ class QueryOption(enum.Enum):
     FULL_COUNT = 2
 
 
-async def init_session(path: Optional[str]=None)->aiohttp.ClientSession:
-    if path is None:
-        connector = aiohttp.TCPConnector()
-    else:
-        connector = aiohttp.UnixConnector(path=path)
-    return aiohttp.ClientSession(connector=connector)
-
-
-async def login(session: aiohttp.ClientSession, username: str, password: str)->str:
-    resp = await session.post('/_open/auth', json={'username': username, 'password': password})
-    jwt = (await resp.json())['jwt']
-    return jwt
-
-
 class ArangoClient:
     def __init__(self,
                  address: Optional[Tuple, list][str, int] = None,
@@ -38,22 +24,20 @@ class ArangoClient:
                  db_name: Optional[str] = None,
                  scheme: Optional[str]=None):
         if path is None:
-            con = aiohttp.TCPConnector()
+            connector = aiohttp.TCPConnector()
             if address is None:
                 address = ('localhost', 8529)
             self._address = (*address, scheme)
             self._url_prefix = f'{scheme}://{address[0]}:{address[1]}'
             self._path = None
         else:
-            con = aiohttp.UnixConnector(path=path)
+            connector = aiohttp.UnixConnector(path=path)
             self._path = path
             self._address = None
             self._url_prefix = ''
-        self._connector = con
         self._auth_token = None
         self.headers = {'Content-Type': 'application/json'}
-        self._session = aiohttp.ClientSession(
-            connector=self._connector)
+        self._session =  aiohttp.ClientSession(connector=connector)
         self.db_name = db_name
 
     @property
@@ -67,6 +51,7 @@ class ArangoClient:
         response = await self._session.request(
             endpoint[0],
             self.url_prefix + endpoint[1],
+            headers=self.headers,
             **cfg
         )
         return response
@@ -78,8 +63,7 @@ class ArangoClient:
             )
         data = await resp.json()
         if resp.status < 300:
-            self._auth_token = data['jwt']
-            self.headers['Authorization'] = f'bearer {self._auth_token}'
+            self.headers['Authorization'] = f"bearer {data['jwt']}"
         return data
 
     async def stream(self):
