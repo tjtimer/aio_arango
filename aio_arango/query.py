@@ -1,3 +1,82 @@
+import enum
+from collections import namedtuple
+from typing import Optional
+
+QueryResult = namedtuple('QueryResult', 'data meta')
+
+
+class QueryOption(enum.Enum):
+    COUNT = 1
+    FULL_COUNT = 2
+
+
+class Query:
+
+    def __init__(self):
+        self._value = []
+
+    def __repr__(self):
+        return ' '.join(self._value)
+
+    def for_in(self, identifier: str, collection: str):
+        self._value.append(f"FOR {identifier} IN {collection}")
+        return self
+
+    def filter(self):
+        self._value.append(f"FILTER")
+        return self
+
+    def eq(self, left: str, right: str):
+        self._value.append(f"{left} == {right}")
+        return self
+
+    def gt(self, left: str, right: str):
+        self._value.append(f"{left} > {right}")
+        return self
+
+    def gte(self, left: str, right: str):
+        self._value.append(f"{left} >= {right}")
+        return self
+
+    def _and(self):
+        self._value.append("AND")
+        return self
+
+    def _or(self):
+        self._value.append("OR")
+        return self
+
+
+class QueryCursor:
+    _endpoint: tuple = ('POST', "/_api/cursor")
+    __slots__ = ('_request', '_has_more', '_data')
+
+    def __init__(self, query_string: str, *,
+                 size: Optional[int]=None,
+                 count: Optional[QueryOption]=None):
+        self._request = {'query': query_string}
+        if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
+            self._request['count'] = True
+            if count is QueryOption.FULL_COUNT:
+                self._request['options'] = {'fullCount': True}
+        if size:
+            self._request['batchSize'] = size
+
+    async def __call__(self, client):
+        meth, url = 'POST', "/_api/cursor"
+        response = await client.request(
+            meth, url,
+            data=self._request
+        )
+        while True:
+            data = await response.json()
+            if response.status not in [200, 201]:
+                yield data['errorMessage']
+                break
+
+
+
+
 async def fetch(client, **kwargs):
     return await client._session.request(
         "POST", f"{client.url_prefix}/_api/cursor", **kwargs)

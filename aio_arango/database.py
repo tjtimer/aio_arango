@@ -2,7 +2,7 @@ from typing import Iterator
 
 
 async def list(client):
-    return await client._session.request(
+    return await client.request(
         'GET', f'{client.url_prefix}/_api/database')
 
 async def list_for_user(client, user):
@@ -14,7 +14,7 @@ async def current(client):
     return await client._session.request(
         'GET', f'{client.url_prefix}/_api/database/current')
 
-async def create(client, name: str, *, users: Iterator<dict>=None):
+async def create(client, name: str, *, users: Iterator[dict]=None):
     json = {'name': name}
     if isinstance(users, Iterator):
         json['users'] = [*users]

@@ -12,11 +12,13 @@ def test_client_init(loop):
     assert hasattr(client, 'user')
     assert hasattr(client, 'database')
 
+
 async def test_client_login(client, credentials):
     resp = await client.login(*credentials)
     assert resp not in [None, '']
     assert 'errorMessage' not in resp.keys(), resp['errorMessage']
     assert client._auth_token == resp['jwt']
+
 
 async def test_client_user_get(user_client):
     response = await user_client.user_get('testuwe')
@@ -25,6 +27,7 @@ async def test_client_user_get(user_client):
     print(user)
     assert isinstance(user, dict)
 
+
 async def test_client_user_create(root_client, client):
     response = await root_client.user(json={'user': 'testuschi', 'passwd': 'testuschi'})
     assert response.status < 300
@@ -32,6 +35,7 @@ async def test_client_user_create(root_client, client):
     print(user)
     await test_client_login(client, ('testuschi', 'testuschi'))
     assert isinstance(user, dict)
+
 
 async def test_client_user_delete(root_client, client):
     response = await root_client.user_delete('testuschi')
@@ -81,6 +85,7 @@ async def test_client_collection_unload(db_client):
     print('collection_unload')
     pprint(data)
     assert data['name'] == 'account'
+
 
 async def test_client_collection_load_with_kwargs(db_client):
     response = await db_client.collection_load(
