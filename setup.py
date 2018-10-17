@@ -9,5 +9,6 @@ setup(
         short_description='Async Python ArangoDB adapter.',
         author='Tim "tjtimer" Jedro',
         author_email='tjtimer@gmail.com',
-        packages=find_packages('aio_arango')
+        packages=find_packages('aio_arango'),
+        install_requires=('aiohttp', 'PyYaml', 'pytest', 'pytest-aiohttp')
 )
