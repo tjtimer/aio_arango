@@ -2,6 +2,8 @@ import enum
 from collections import namedtuple
 from typing import Optional
 
+from aio_arango.client import ArangoClient
+
 QueryResult = namedtuple('QueryResult', 'data meta')
 
 
@@ -10,16 +12,18 @@ class QueryOption(enum.Enum):
     FULL_COUNT = 2
 
 
-class Query:
+class QueryBuilder:
 
     def __init__(self):
         self._value = []
+        self._identifiers = []
 
     def __repr__(self):
         return ' '.join(self._value)
 
     def for_in(self, identifier: str, collection: str):
         self._value.append(f"FOR {identifier} IN {collection}")
+        self._identifiers.append(identifier)
         return self
 
     def filter(self):
@@ -47,32 +51,20 @@ class Query:
         return self
 
 
-class QueryCursor:
-    _endpoint: tuple = ('POST', "/_api/cursor")
-    __slots__ = ('_request', '_has_more', '_data')
+async def query(client: ArangoClient, query_str: str, *,
+                size: Optional[int]=None, count: Optional[QueryOption]=None):
+    data = {'query': query_str}
+    if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
+        data['count'] = True
+        if count is QueryOption.FULL_COUNT:
+            data['options'] = {'fullCount': True}
+    if size:
+        data['batchSize'] = size
+    resp = await client.request('POST', "/_api/cursor", data)
+    resp_data = await resp.json()
+    result = resp_data.pop('result')
 
-    def __init__(self, query_string: str, *,
-                 size: Optional[int]=None,
-                 count: Optional[QueryOption]=None):
-        self._request = {'query': query_string}
-        if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
-            self._request['count'] = True
-            if count is QueryOption.FULL_COUNT:
-                self._request['options'] = {'fullCount': True}
-        if size:
-            self._request['batchSize'] = size
-
-    async def __call__(self, client):
-        meth, url = 'POST', "/_api/cursor"
-        response = await client.request(
-            meth, url,
-            data=self._request
-        )
-        while True:
-            data = await response.json()
-            if response.status not in [200, 201]:
-                yield data['errorMessage']
-                break
+    return
 
 
 
