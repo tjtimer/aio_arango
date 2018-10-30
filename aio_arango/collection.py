@@ -3,7 +3,7 @@ collection
 author: Tim "tjtimer" Jedro
 created: 24.10.18
 """
-from client import ArangoClient
+from aio_arango.client import ArangoClient
 
 URL = '/_api/collection'
 

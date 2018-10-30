@@ -67,8 +67,6 @@ async def query(client: ArangoClient, query_str: str, *,
     return
 
 
-
-
 async def fetch(client, **kwargs):
     return await client._session.request(
         "POST", f"{client.url_prefix}/_api/cursor", **kwargs)
@@ -83,7 +81,7 @@ async def delete(client, cursor_identifier, **kwargs):
     return await client._session.request(
         "DELETE", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
 
-
+"""
 async def query(client, **kwargs):
     return await client._session.request(
         "POST", f"{client.url_prefix}/_api/query", **kwargs)
@@ -167,3 +165,4 @@ async def simple_within(client, **kwargs):
 async def simple_fulltext(client, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/simple/fulltext", **kwargs)
+"""

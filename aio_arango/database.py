@@ -6,11 +6,13 @@ created: 24.10.18
 
 from typing import Generator, Optional
 
+from aio_arango.client import ArangoClient
+
 INDEX_TYPES = ['fulltext', 'general', 'geo', 'hash', 'persistent', 'skiplist']
 URL = '/_api/database'
 
 
-async def create(client, name: str, *, users: Optional[list]=None):
+async def create(client: ArangoClient, name: str, *, users: Optional[list]=None):
     data = {'name': name}
     if users:
         data['users'] = users

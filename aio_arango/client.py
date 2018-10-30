@@ -8,8 +8,6 @@ from typing import Optional
 
 import aiohttp
 
-from query import QueryCursor, QueryOption
-
 
 async def setup(username: str, password: str):
     cl = ArangoClient()

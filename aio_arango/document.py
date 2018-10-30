@@ -3,11 +3,12 @@ document
 author: Tim "tjtimer" Jedro
 created: 24.10.18
 """
+from aio_arango.client import ArangoClient
 
 URL = '_api/document'
 
 
-async def get(client, handle):
+async def get(client: ArangoClient, handle):
     return await client.request('GET', f'{URL}/{handle}')
 
 
