@@ -4,15 +4,9 @@ author: Tim "tjtimer" Jedro
 created: 23.10.18
 """
 import asyncio
-from typing import Optional
+from typing import Optional, Generator
 
 import aiohttp
-
-
-async def setup(username: str, password: str):
-    cl = ArangoClient()
-    await cl.login(username, password)
-    return cl
 
 
 class ClientError(Exception):
@@ -24,12 +18,14 @@ class AccessLevel:
     READ = "ro"
     FULL = "rw"
 
+DB_URL = '/_api/database'
 
 class ArangoClient:
     _session: aiohttp.ClientSession = None
     _headers: dict = {'Accept': 'application/json'}
 
     def __init__(self,
+                 username: str, password: str, *,
                  host: Optional[str]=None,
                  port: Optional[int]=None,
                  scheme: Optional[str]=None):
@@ -40,13 +36,22 @@ class ArangoClient:
         if port is None:
             port = 8529
         self._base_url = f'{scheme}://{host}:{port}'
-        self._db_name = None
+        self.__credentials = (username, password)
+        self.db = None
 
     @property
     def url_prefix(self):
-        if self._db_name is None:
+        if self.db is None:
             return self._base_url
-        return f'{self._base_url}/_db/{self._db_name}'
+        return f'{self._base_url}/_db/{self.db}'
+
+    async def __aenter__(self):
+        await self.login(*self.__credentials)
+        self.db = self._name
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.close()
 
     async def request(self, method: str, url: str,
                       data: Optional[dict]=None, *,
@@ -82,3 +87,21 @@ class ArangoClient:
         await self._session.close()
         await asyncio.sleep(0.25)
         self._session = None
+
+    async def create_db(self, name: str, *, users: Optional[list] = None):
+        self.db = None
+        data = {'name': name}
+        if users:
+            data['users'] = users
+        await self.request('POST', DB_URL, data)
+
+    async def get_dbs(self) -> Generator:
+        resp = await self.request('GET', DB_URL)
+        return (db for db in (await resp.json())['result'])
+
+    async def current_db(self) -> str:
+        resp = await self.request('GET', f'{DB_URL}/current')
+        return (await resp.json())['result']
+
+    async def delete_db(self, name: str):
+        await self.request('DELETE', f'{DB_URL}/{name}')
