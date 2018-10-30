@@ -105,3 +105,54 @@ class ArangoClient:
 
     async def delete_db(self, name: str):
         await self.request('DELETE', f'{DB_URL}/{name}')
+
+    async def create_user(self,
+                          name: str, password: str,
+                          active: Optional[bool]=None,
+                          extra: Optional[dict]=None):
+        user_data = dict(user=name, passwd=password)
+        if active is None:
+            active = True
+        user_data['active'] = active
+        if isinstance(extra, dict):
+            user_data['extra'] = extra
+        return await self.request(
+            'POST', f'/_api/user', data=user_data)
+
+    async def update_user(self, name: str, data: dict):
+        await self.request('PATCH', f'/_api/user/{name}', data)
+
+    async def replace_user(self, name: str, data: dict):
+        await self.request('PUT', f'/_api/user/{name}', data)
+
+    async def delete_user(self, name: str):
+        await self.request('DELETE', f'/_api/user/{name}')
+
+    async def available_dbs(self, name: str)->Generator:
+        resp = await self.request('GET', f'/_api/user/{name}/database')
+        return (db for db in (await resp.json())['result'])
+
+    async def get_access_level(self, name: str, db: str,
+                               col_name: Optional[str]=None)->AccessLevel:
+        url = f'/_api/user/{name}/database'
+        handle = db
+        if col_name:
+            handle = f"{db}/{col_name}"
+        resp = await self.request('GET', f"{url}/{handle}")
+        return (await resp.json())[handle]
+
+    async def set_access_level(self,
+                               name: str, db: str, col_name: str,
+                               level: AccessLevel):
+        url = f'/_api/user/{name}/database'
+        handle = db
+        if col_name:
+            handle = f"{db}/{col_name}"
+        await self.request('PUT', f"{url}/{handle}", data={'grant': level})
+
+    async def reset_access_level(self, name: str, db: str, col_name: str):
+        url = f'/_api/user/{name}/database'
+        handle = db
+        if col_name:
+            handle = f"{db}/{col_name}"
+        await self.request('DELETE', f"{url}/{handle}")
