@@ -29,7 +29,7 @@ class ArangoClient:
                  host: Optional[str]=None,
                  port: Optional[int]=None,
                  scheme: Optional[str]=None):
-        if scheme not in 'https':
+        if scheme not in ['http', 'https']:
             scheme = 'http'
         if host is None:
             host = 'localhost'
@@ -37,6 +37,7 @@ class ArangoClient:
             port = 8529
         self._base_url = f'{scheme}://{host}:{port}'
         self.__credentials = (username, password)
+        self._is_authenticated = False
         self.db = None
 
     @property
@@ -45,9 +46,12 @@ class ArangoClient:
             return self._base_url
         return f'{self._base_url}/_db/{self.db}'
 
+    @property
+    def is_authenticated(self):
+        return self._headers.get('Authorization') is not None
+
     async def __aenter__(self):
-        await self.login(*self.__credentials)
-        self.db = self._name
+        await self.login()
         return self
 
     async def __aexit__(self, *exc):
@@ -73,17 +77,18 @@ class ArangoClient:
             return resp
         raise ClientError((await resp.json())['errorMessage'])
 
-    async def login(self, username: str, password: str):
+    async def login(self):
         if self._session is None:
             self._session = aiohttp.ClientSession()
         response = await self.request(
             'POST', '/_open/auth',
-            data={'username': username, 'password': password}
+            data={'username': self.__credentials[0], 'password': self.__credentials[1]}
             )
         data = await response.json()
         self._headers['Authorization'] = f"bearer {data['jwt']}"
 
     async def close(self):
+        self._headers.pop('Authorization', None)
         await self._session.close()
         await asyncio.sleep(0.25)
         self._session = None
@@ -128,7 +133,7 @@ class ArangoClient:
     async def delete_user(self, name: str):
         await self.request('DELETE', f'/_api/user/{name}')
 
-    async def available_dbs(self, name: str)->Generator:
+    async def get_user_dbs(self, name: str)->Generator:
         resp = await self.request('GET', f'/_api/user/{name}/database')
         return (db for db in (await resp.json())['result'])
 

@@ -63,8 +63,7 @@ async def query(client: ArangoClient, query_str: str, *,
     resp = await client.request('POST', "/_api/cursor", data)
     resp_data = await resp.json()
     result = resp_data.pop('result')
-
-    return
+    return result
 
 
 async def fetch(client, **kwargs):

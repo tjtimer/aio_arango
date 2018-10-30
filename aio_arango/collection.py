@@ -8,9 +8,11 @@ from typing import Optional
 
 from aio_arango.client import ArangoClient
 
+
 class DocumentType(enum.Enum):
     vertex = 2
     edge = 3
+
 
 class ArangoCollection:
     URL = '/_api/collection'
