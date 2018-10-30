@@ -1,6 +1,8 @@
 # aio_arango
 *Async Python driver for ArangoDB*
 
+**[Docs: ](https://tjtimer.github.io/aio_arango/)**
+
 ## Getting Started
 
 ### Installation
