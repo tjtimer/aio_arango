@@ -1,37 +1,35 @@
-## Welcome to GitHub Pages
+# aio_arango
+*Async Python driver for ArangoDB*
 
-You can use the [editor on GitHub](https://github.com/tjtimer/aio_arango/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+## Getting Started
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Installation
 
-### Markdown
+```bash
+pip install aio_arango
+```  
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Usage
 
-```markdown
-Syntax highlighted code block
+create a database:
 
-# Header 1
-## Header 2
-### Header 3
+```python
+from aio_arango.client import ArangoClient
 
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+async def setup():
+    async with ArangoClient('me', 'mypassword') as cl:
+        await cl.create_db('mydb')
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+create a collection and add some documents:
 
-### Jekyll Themes
+```python
+from aio_arango.db import ArangoDB
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/tjtimer/aio_arango/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+async def run():
+    async with ArangoDB('me', 'mypassword', 'mydb') as db:
+        await db.create_collection('collection1')
+        await db.collection1.add({'name': 'Jane'})
+        await db.collection1.add({'name': 'John'})
+        await db.collection1.add({'name': 'Karl', 'age': 42})
+```
