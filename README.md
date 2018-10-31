@@ -16,11 +16,11 @@ pip install aio_arango
 create a database:
 
 ```python
-from aio_arango.client import ArangoClient
+from aio_arango.client import ArangoAdmin
 
 async def setup():
-    async with ArangoClient('me', 'mypassword') as cl:
-        await cl.create_db('mydb')
+    async with ArangoAdmin('me', 'mypassword') as admin:
+        await admin.create_db('mydb')
 ```
 
 create a collection and add some documents:
@@ -34,4 +34,6 @@ async def run():
         await db.collection1.add({'name': 'Jane'})
         await db.collection1.add({'name': 'John'})
         await db.collection1.add({'name': 'Karl', 'age': 42})
+        # or add a list of documents
+        await db.collection1.add([{'name': 'Anna'}, {'name': 'Jacky', 'email': 'jacky@swag.com'}])
 ```
