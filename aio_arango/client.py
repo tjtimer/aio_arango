@@ -4,7 +4,7 @@ author: Tim "tjtimer" Jedro
 created: 23.10.18
 """
 import asyncio
-from typing import Optional, Generator
+from typing import Generator, Optional
 
 import aiohttp
 
@@ -18,7 +18,9 @@ class AccessLevel:
     READ = "ro"
     FULL = "rw"
 
+
 DB_URL = '/_api/database'
+
 
 class ArangoClient:
     _session: aiohttp.ClientSession = None
@@ -26,9 +28,9 @@ class ArangoClient:
 
     def __init__(self,
                  username: str, password: str, *,
-                 host: Optional[str]=None,
-                 port: Optional[int]=None,
-                 scheme: Optional[str]=None):
+                 host: Optional[str] = None,
+                 port: Optional[int] = None,
+                 scheme: Optional[str] = None):
         if scheme not in ['http', 'https']:
             scheme = 'http'
         if host is None:
@@ -58,9 +60,9 @@ class ArangoClient:
         await self.close()
 
     async def request(self, method: str, url: str,
-                      data: Optional[dict]=None, *,
-                      params: Optional[dict]=None,
-                      headers: Optional[dict]=None)->aiohttp.ClientResponse:
+                      data: Optional[dict] = None, *,
+                      params: Optional[dict] = None,
+                      headers: Optional[dict] = None) -> aiohttp.ClientResponse:
         cfg = {'headers': self._headers}
         if headers:
             cfg['headers'].update(**headers)
@@ -83,7 +85,7 @@ class ArangoClient:
         response = await self.request(
             'POST', '/_open/auth',
             data={'username': self.__credentials[0], 'password': self.__credentials[1]}
-            )
+        )
         data = await response.json()
         self._headers['Authorization'] = f"bearer {data['jwt']}"
 
@@ -97,7 +99,7 @@ class ArangoClient:
 class ArangoAdmin(ArangoClient):
 
     def __init__(self, username: str, password: str, *,
-                 host: str=None, port: int=None, scheme: str=None):
+                 host: str = None, port: int = None, scheme: str = None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
         self._databases = []
 
@@ -126,8 +128,8 @@ class ArangoAdmin(ArangoClient):
 
     async def create_user(self,
                           name: str, password: str,
-                          active: Optional[bool]=None,
-                          extra: Optional[dict]=None):
+                          active: Optional[bool] = None,
+                          extra: Optional[dict] = None):
         user_data = dict(user=name, passwd=password)
         if active is None:
             active = True
@@ -154,12 +156,12 @@ class ArangoAdmin(ArangoClient):
     async def delete_user(self, name: str):
         await self.request('DELETE', f'/_api/user/{name}')
 
-    async def get_user_dbs(self, name: str)->Generator:
+    async def get_user_dbs(self, name: str) -> Generator:
         resp = await self.request('GET', f'/_api/user/{name}/database')
         return (db for db in (await resp.json())['result'])
 
     async def get_access_level(self, name: str, db: str,
-                               collection: Optional[str]=None)->AccessLevel:
+                               collection: Optional[str] = None) -> AccessLevel:
         url = f'/_api/user/{name}/database'
         handle = db
         if collection:
@@ -168,8 +170,8 @@ class ArangoAdmin(ArangoClient):
         return (await resp.json())[handle]
 
     async def set_access_level(self,
-                               name: str, db: str, collection: Optional[str]=None,
-                               level: AccessLevel=None):
+                               name: str, db: str, collection: Optional[str] = None,
+                               level: AccessLevel = None):
         if level is None:
             level = AccessLevel.READ
         url = f'/_api/user/{name}/database'
@@ -178,7 +180,7 @@ class ArangoAdmin(ArangoClient):
             handle = f"{db}/{collection}"
         await self.request('PUT', f"{url}/{handle}", data={'grant': level})
 
-    async def reset_access_level(self, name: str, db: str, collection: Optional[str]=None):
+    async def reset_access_level(self, name: str, db: str, collection: Optional[str] = None):
         url = f'/_api/user/{name}/database'
         handle = db
         if collection:

@@ -57,33 +57,41 @@ async def time(client, **kwargs):
     return await client._session.request(
         "GET", f"{client.url_prefix}/_admin/time", **kwargs)
 
+
 async def job(client, job_id, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/job/{job_id}", **kwargs)
+
 
 async def job_cancel(client, job_id, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/job/{job_id}/cancel", **kwargs)
 
+
 async def job_delete(client, type, **kwargs):
     return await client._session.request(
         "DELETE", f"{client.url_prefix}/_api/job/{type}", **kwargs)
+
 
 async def job_get(client, job_id, **kwargs):
     return await client._session.request(
         "GET", f"{client.url_prefix}/_api/job/{job_id}", **kwargs)
 
+
 async def job_list(client, type, **kwargs):
     return await client._session.request(
         "GET", f"{client.url_prefix}/_api/job/{type}", **kwargs)
+
 
 async def tasks(client, id, **kwargs):
     return await client._session.request(
         "GET", f"{client.url_prefix}/_api/tasks/{id}", **kwargs)
 
+
 async def tasks_create(client, id, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/tasks/{id}", **kwargs)
+
 
 async def tasks_delete(client, id, **kwargs):
     return await client._session.request(
@@ -167,6 +175,7 @@ async def cluster_test(client, method, json: dict = None):
         json = {'key': 'value'}
     return await client._session.request(
         method, f"{client.url_prefix}/_admin/cluster-test", json=json)
+
 
 async def replication(client, **kwargs):
     return await client._session.request(

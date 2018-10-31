@@ -20,7 +20,7 @@ class IndexType:
 
 class ArangoDB(ArangoClient):
     def __init__(self, username: str, password: str, db: str, *,
-                 host: str=None, port: int=None, scheme: str=None):
+                 host: str = None, port: int = None, scheme: str = None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
         self.db = db
 
@@ -46,23 +46,23 @@ class ArangoDB(ArangoClient):
     async def index(self, **kwargs):
         return await self.request(
             'GET', f'/_api/index', **kwargs)
-    
+
     async def create_index(self, idx_type: IndexType, **kwargs):
         return await self.request(
             'POST', f'/_api/index#{idx_type}', **kwargs)
-    
+
     async def delete_index(self, index_handle, **kwargs):
         return await self.request(
             'DELETE', f'/_api/index/{index_handle}', **kwargs)
-    
+
     async def import_document(self, **kwargs):
         return await self.request(
             'POST', f'/_api/import#document', **kwargs)
-    
+
     async def import_json(self, **kwargs):
         return await self.request(
             'POST', f'/_api/import#json', **kwargs)
-    
+
     async def export(self, **kwargs):
         return await self.request(
             'POST', f'/_api/export', **kwargs)
@@ -76,7 +76,7 @@ class DocumentType(enum.Enum):
 class ArangoCollection:
     URL = '/_api/collection'
 
-    def __init__(self, client: ArangoDB, name: str, doc_type: Optional[DocumentType]=None):
+    def __init__(self, client: ArangoDB, name: str, doc_type: Optional[DocumentType] = None):
         self._client = client
         self._name = name
         if doc_type is None:
@@ -160,7 +160,7 @@ class ArangoCollection:
     async def get(self, key):
         return await self._client.request('GET', f'{self.doc_url}/{key}')
 
-    async def all(self, result: str=None):
+    async def all(self, result: str = None):
         data = {'collection': self._name}
         if result not in ['id', 'key', 'path']:
             result = 'path'

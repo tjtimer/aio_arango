@@ -52,7 +52,7 @@ class QueryBuilder:
 
 
 async def query(client: ArangoClient, query_str: str, *,
-                size: Optional[int]=None, count: Optional[QueryOption]=None):
+                size: Optional[int] = None, count: Optional[QueryOption] = None):
     data = {'query': query_str}
     if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
         data['count'] = True
@@ -79,6 +79,7 @@ async def next(client, cursor_identifier, **kwargs):
 async def delete(client, cursor_identifier, **kwargs):
     return await client._session.request(
         "DELETE", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
+
 
 """
 async def query(client, **kwargs):
