@@ -6,7 +6,7 @@ created: 24.10.18
 import enum
 from typing import Optional
 
-from aio_arango.client import ArangoClient
+from aio_arango.db import ArangoDB
 
 
 class DocumentType(enum.Enum):
@@ -17,7 +17,7 @@ class DocumentType(enum.Enum):
 class ArangoCollection:
     URL = '/_api/collection'
 
-    def __init__(self, client: ArangoClient, name: str, doc_type: Optional[DocumentType]=None):
+    def __init__(self, client: ArangoDB, name: str, doc_type: Optional[DocumentType]=None):
         self._client = client
         self._name = name
         if doc_type is None:
@@ -54,9 +54,10 @@ class ArangoCollection:
         await self._client.request(
             'PUT', f'{self.url}/rename', {'name': new_name})
         self._name = new_name
+        await self._client._update()
 
     async def rotate(self):
-        return await self._client.request(
+        await self._client.request(
             'PUT', f'{self.url}/rotate')
 
     async def truncate(self):
@@ -64,8 +65,8 @@ class ArangoCollection:
             'PUT', f'{self.url}/truncate')
 
     async def delete(self):
-        return await self._client.request(
-            'DELETE', f'{self.url}')
+        await self._client.request('DELETE', f'{self.url}')
+        await self._client._update()
 
     async def count(self):
         return await self._client.request(

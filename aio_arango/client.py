@@ -93,12 +93,24 @@ class ArangoClient:
         await asyncio.sleep(0.25)
         self._session = None
 
+
+class ArangoAdmin(ArangoClient):
+
+    def __init__(self, username: str, password: str, *,
+                 host: str=None, port: int=None, scheme: str=None):
+        super().__init__(username, password, host=host, port=port, scheme=scheme)
+        self._databases = []
+
+    async def login(self):
+        await super().login()
+        self._databases = list(await self.get_dbs())
+
     async def create_db(self, name: str, *, users: Optional[list] = None):
-        self.db = None
         data = {'name': name}
         if users:
             data['users'] = users
         await self.request('POST', DB_URL, data)
+        self._databases = list(await self.get_dbs())
 
     async def get_dbs(self) -> Generator:
         resp = await self.request('GET', DB_URL)
@@ -110,6 +122,7 @@ class ArangoClient:
 
     async def delete_db(self, name: str):
         await self.request('DELETE', f'{DB_URL}/{name}')
+        self._databases = list(await self.get_dbs())
 
     async def create_user(self,
                           name: str, password: str,
@@ -123,6 +136,14 @@ class ArangoClient:
             user_data['extra'] = extra
         return await self.request(
             'POST', f'/_api/user', data=user_data)
+
+    async def get_user(self, name):
+        resp = await self.request('GET', f'/_api/user/{name}')
+        return (await resp.json())['result']
+
+    async def get_users(self):
+        resp = await self.request('GET', f'/_api/user/')
+        return (await resp.json())['result']
 
     async def update_user(self, name: str, data: dict):
         await self.request('PATCH', f'/_api/user/{name}', data)
@@ -138,26 +159,28 @@ class ArangoClient:
         return (db for db in (await resp.json())['result'])
 
     async def get_access_level(self, name: str, db: str,
-                               col_name: Optional[str]=None)->AccessLevel:
+                               collection: Optional[str]=None)->AccessLevel:
         url = f'/_api/user/{name}/database'
         handle = db
-        if col_name:
-            handle = f"{db}/{col_name}"
+        if collection:
+            handle = f"{db}/{collection}"
         resp = await self.request('GET', f"{url}/{handle}")
         return (await resp.json())[handle]
 
     async def set_access_level(self,
-                               name: str, db: str, col_name: str,
-                               level: AccessLevel):
+                               name: str, db: str, collection: Optional[str]=None,
+                               level: AccessLevel=None):
+        if level is None:
+            level = AccessLevel.READ
         url = f'/_api/user/{name}/database'
         handle = db
-        if col_name:
-            handle = f"{db}/{col_name}"
+        if collection:
+            handle = f"{db}/{collection}"
         await self.request('PUT', f"{url}/{handle}", data={'grant': level})
 
-    async def reset_access_level(self, name: str, db: str, col_name: str):
+    async def reset_access_level(self, name: str, db: str, collection: Optional[str]=None):
         url = f'/_api/user/{name}/database'
         handle = db
-        if col_name:
-            handle = f"{db}/{col_name}"
+        if collection:
+            handle = f"{db}/{collection}"
         await self.request('DELETE', f"{url}/{handle}")

@@ -20,19 +20,29 @@ class IndexType:
 
 
 class ArangoDB(ArangoClient):
-    def __init__(self, username: str, password: str, db_name: str, *,
+    def __init__(self, username: str, password: str, db: str, *,
                  host: str=None, port: int=None, scheme: str=None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
-        self.db = db_name
+        self.db = db
+        self._collections = []
 
-    async def collections(self, exclude_system: bool = None):
+    async def _update(self):
+        for clc in await self.get_collections():
+            if not hasattr(self, clc['name']):
+                setattr(self, clc['name'], ArangoCollection(self, clc['name']))
+
+    async def login(self):
+        await super().login()
+        await self._update()
+
+    async def get_collections(self, exclude_system: bool = None):
         resp = await self.request('GET', f'/_api/collection', params={'excludeSystem': bool(exclude_system)})
         return (c for c in (await resp.json())['result'])
 
     async def create_collection(self, name):
         clc = ArangoCollection(self, name)
         await clc.create()
-        setattr(self, name, clc)
+        await self._update()
 
     async def index(self, **kwargs):
         return await self.request(
@@ -57,11 +67,4 @@ class ArangoDB(ArangoClient):
     async def export(self, **kwargs):
         return await self.request(
             'POST', f'/_api/export', **kwargs)
-    
-    async def user(self, user, **kwargs):
-        return await self.request(
-            'GET', f'/_api/user/{user}', **kwargs)
-    
-    async def list_user(self, **kwargs):
-        return await self.request(
-            'GET', f'/_api/user/', **kwargs)
+
