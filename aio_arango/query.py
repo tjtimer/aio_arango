@@ -21,6 +21,13 @@ class QueryBuilder:
     def __repr__(self):
         return ' '.join(self._value)
 
+    def __str__(self):
+        return ' '.join(self._value)
+
+    @property
+    def query(self):
+        return str(self)
+
     def for_in(self, identifier: str, collection: str):
         self._value.append(f"FOR {identifier} IN {collection}")
         self._identifiers.append(identifier)
@@ -49,6 +56,9 @@ class QueryBuilder:
     def _or(self):
         self._value.append("OR")
         return self
+
+    def ret(self):
+        self._value.append(f"RETURN")
 
 
 async def query(client: ArangoClient, query_str: str, *,
