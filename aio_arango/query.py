@@ -86,7 +86,7 @@ async def fetch(client, data, queue):
         resp_data = await resp.json()
         for obj in resp_data['result']:
             await queue.put(obj)
-        if resp_data['has_more'] is True:
+        if resp_data['hasMore'] is True:
             resp = await next_batch(client, resp_data['id'])
         else:
             return
