@@ -36,7 +36,7 @@ class ArangoClient:
         if host is None:
             host = 'localhost'
         if port is None:
-            port = 8529
+            port = 10667
         self._base_url = f'{scheme}://{host}:{port}'
         self.__credentials = (username, password)
         self._is_authenticated = False
