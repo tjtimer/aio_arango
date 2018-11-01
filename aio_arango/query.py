@@ -77,7 +77,7 @@ async def query(client: ArangoClient, query_str: str, *,
         obj = await queue.get()
         yield obj
         if fetch_task.done() and queue.empty():
-            raise StopAsyncIteration()
+            return
 
 
 async def fetch(client, data, queue):
