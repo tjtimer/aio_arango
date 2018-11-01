@@ -93,14 +93,13 @@ async def fetch(client, data, queue):
 
 
 async def next_batch(client, cursor_identifier, **kwargs):
-    return await client._session.request(
-        "PUT", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
+    return await client.request(
+        "PUT", f'/_api/cursor/{cursor_identifier}')
 
 
 async def delete(client, cursor_identifier, **kwargs):
-    return await client._session.request(
-        "DELETE", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
-
+    return await client.request(
+        'DELETE', f'/_api/cursor/{cursor_identifier}')
 
 """
 async def query(client, **kwargs):
