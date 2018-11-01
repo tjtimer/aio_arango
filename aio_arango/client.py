@@ -7,6 +7,11 @@ import asyncio
 from typing import Generator, Optional
 
 import aiohttp
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    pass
 
 
 class ClientError(Exception):
