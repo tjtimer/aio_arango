@@ -10,6 +10,7 @@ import aiohttp
 try:
     import uvloop
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    print("using uvloop!")
 except ImportError:
     pass
 
