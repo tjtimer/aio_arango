@@ -6,7 +6,7 @@ created: 31.10.18
 from aio_arango.db import ArangoDB
 
 
-async def test_collection_create_delete():
+async def test_collection_create_read_update_delete():
     name = 'collection1'
     async with ArangoDB('root', 'arango-pw', 'test-db') as db:
         clcs = await db.get_collections()

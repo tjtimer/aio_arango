@@ -73,7 +73,7 @@ class DocumentType(enum.Enum):
     edge = 3
 
 
-class ArangoCollection:
+class ArangoCollection():
     URL = '/_api/collection'
 
     def __init__(self, client: ArangoDB, name: str, doc_type: Optional[DocumentType] = None):
@@ -160,12 +160,9 @@ class ArangoCollection:
     async def get(self, key):
         return await self._client.request('GET', f'{self.doc_url}/{key}')
 
-    async def all(self, result: str = None):
+    async def all(self):
         data = {'collection': self._name}
-        if result not in ['id', 'key', 'path']:
-            result = 'path'
-        data['type'] = result
-        resp = await self._client.request('PUT', f'/_api/simple/all-keys', data)
+        resp = await self._client.request('PUT', f'/_api/simple/all', data)
         return (c for c in (await resp.json())['result'])
 
     async def add(self, data: dict or list):

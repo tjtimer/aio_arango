@@ -79,6 +79,11 @@ class ArangoClient:
             return resp
         raise ClientError((await resp.json())['errorMessage'])
 
+    async def stream(self):
+        queue = asyncio.Queue()
+
+        pass
+
     async def login(self):
         if self._session is None:
             self._session = aiohttp.ClientSession()

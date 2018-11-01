@@ -1,3 +1,4 @@
+import asyncio
 import enum
 from collections import namedtuple
 from typing import Optional
@@ -70,18 +71,28 @@ async def query(client: ArangoClient, query_str: str, *,
             data['options'] = {'fullCount': True}
     if size:
         data['batchSize'] = size
+    queue = asyncio.Queue()
+    fetch_task = asyncio.create_task(fetch(client, data, queue))
+    while True:
+        obj = await queue.get()
+        yield obj
+        if fetch_task.done() and queue.empty():
+            raise StopAsyncIteration()
+
+
+async def fetch(client, data, queue):
     resp = await client.request('POST', "/_api/cursor", data)
-    resp_data = await resp.json()
-    result = resp_data.pop('result')
-    return result
+    while True:
+        resp_data = await resp.json()
+        for obj in resp_data['result']:
+            await queue.put(obj)
+        if resp_data['has_more'] is True:
+            resp = await next_batch(client, resp_data['id'])
+        else:
+            return
 
 
-async def fetch(client, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/cursor", **kwargs)
-
-
-async def next(client, cursor_identifier, **kwargs):
+async def next_batch(client, cursor_identifier, **kwargs):
     return await client._session.request(
         "PUT", f"{client.url_prefix}/_api/cursor/{cursor_identifier}", **kwargs)
 
