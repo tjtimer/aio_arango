@@ -12,7 +12,7 @@ try:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     print("using uvloop!")
 except ImportError:
-    pass
+    print("not using uvloop!")
 
 
 class ClientError(Exception):
