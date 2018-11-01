@@ -9,5 +9,6 @@ async def test_query():
             assert 'idx' in obj.keys()
             assert 'sqr' in obj.keys()
             assert int(obj['idx'])**2 == int(obj['sqr'])
+            print(f'obj {obj["idx"]}: {obj["sqr"]}\n')
             counter += 1
         assert counter == 5000
