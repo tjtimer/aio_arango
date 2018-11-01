@@ -3,14 +3,10 @@ test_simple
 author: Tim "tjtimer" Jedro
 created: 31.10.18
 """
-from aio_arango.client import ArangoAdmin
 from aio_arango.db import ArangoDB
 
 
 async def test_collection_create_read_update_delete():
-    name = 'test-db'
-    async with ArangoAdmin('root', 'arango-pw') as admin:
-        await admin.create_db(name)
     name = 'collection1'
     async with ArangoDB('root', 'arango-pw', 'test-db') as db:
         clcs = await db.get_collections()
