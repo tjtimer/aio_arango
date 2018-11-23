@@ -7,6 +7,12 @@ import enum
 from typing import Optional
 
 from aio_arango.client import ArangoClient
+from aio_arango.query import fetch, fetch_next, query
+
+
+class DocumentType(enum.Enum):
+    VERTEX = 2
+    EDGE = 3
 
 
 class IndexType:
@@ -23,10 +29,18 @@ class ArangoDB(ArangoClient):
                  host: str = None, port: int = None, scheme: str = None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
         self.db = db
+        self._collections = {}
+
+    def __getattr__(self, item):
+        return self._collections[item]
+
+    def __getitem__(self, item):
+        return self._collections[item]
 
     async def _update(self):
         for clc in await self.get_collections():
-            setattr(self, clc['name'], ArangoCollection(self, clc['name']))
+            if clc['name'] not in self._collections.keys():
+                self._collections[clc['name']] = ArangoCollection(self, clc['name'])
 
     async def login(self):
         await super().login()
@@ -38,10 +52,11 @@ class ArangoDB(ArangoClient):
             params={'excludeSystem': str(bool(exclude_system))})
         return (c for c in (await resp.json())['result'])
 
-    async def create_collection(self, name):
-        clc = ArangoCollection(self, name)
-        await clc.create()
-        await self._update()
+    async def create_collection(self, name, doc_type: Optional[DocumentType] = None):
+        clc = ArangoCollection(self, name, doc_type)
+        if name not in self._collections.keys():
+            await clc.create()
+            await self._update()
 
     async def index(self, **kwargs):
         return await self.request(
@@ -67,10 +82,19 @@ class ArangoDB(ArangoClient):
         return await self.request(
             'POST', f'/_api/export', **kwargs)
 
+    async def query(self, query_str: str, options: dict = None):
+        if options is None:
+            options = {}
+        async for obj in query(self, query_str, **options):
+            yield obj
 
-class DocumentType(enum.Enum):
-    vertex = 2
-    edge = 3
+    async def fetch(self, query_str: str, options: dict = None):
+        if options is None:
+            options = {}
+        return await fetch(self, query_str, **options)
+
+    async def fetch_next(self, cursor_id):
+        return await fetch_next(self, cursor_id)
 
 
 class ArangoCollection():
@@ -80,7 +104,7 @@ class ArangoCollection():
         self._client = client
         self._name = name
         if doc_type is None:
-            doc_type = DocumentType.vertex
+            doc_type = DocumentType.VERTEX
         self._doc_type = doc_type
 
     @property
@@ -96,7 +120,9 @@ class ArangoCollection():
         return f'/_api/document/{self._name}'
 
     async def create(self):
-        data = {'name': self._name, 'type': self._doc_type.value}
+        data = {'name': self._name}
+        if self._doc_type == DocumentType.EDGE:
+            data['type'] = 3
         await self._client.request('POST', f'{self.URL}', data)
 
     async def load(self, *, count=None, col_type=None):
@@ -166,8 +192,9 @@ class ArangoCollection():
         return (c for c in (await resp.json())['result'])
 
     async def add(self, data: dict or list):
-        await self._client.request(
-            'POST', f'{self.doc_url}', data)
+        resp = await (await self._client.request(
+            'POST', f'{self.doc_url}', data)).json()
+        return resp
 
     async def update(self, key, data: dict):
         return await self._client.request(

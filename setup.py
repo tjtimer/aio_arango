@@ -13,7 +13,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 # Package meta-data.
 NAME = 'aio_arango'
@@ -25,11 +25,12 @@ REQUIRES_PYTHON = '>=3.7.0'
 VERSION = '0.0.1a'
 
 # What packages are required for this module to be executed?
-REQUIRED = ('aiohttp', 'PyYaml', 'pytest', 'pytest-aiohttp')
+REQUIRED = ('aiohttp', 'PyYaml')
 
 # What packages are optional?
 EXTRAS = {
-    'linux-only': ['uvloop'],
+    'linux': ['uvloop'],
+    'with_tests': ['pytest', 'pytest-aiohttp']
 }
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -41,12 +42,7 @@ except FileNotFoundError:
     long_description = DESCRIPTION
 
 # Load the package's __version__.py module as a dictionary.
-about = {}
-if not VERSION:
-    with open(os.path.join(here, NAME, '__version__.py')) as f:
-        exec(f.read(), about)
-else:
-    about['__version__'] = VERSION
+about = {'__version__': VERSION}
 
 
 class UploadCommand(Command):
@@ -97,7 +93,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=('tests', 'venv')),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
@@ -114,9 +110,8 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: CPython'
     ],
     # $ setup.py publish support.
     cmdclass={

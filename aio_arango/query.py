@@ -1,4 +1,3 @@
-import asyncio
 import enum
 from collections import namedtuple
 from typing import Optional
@@ -71,30 +70,36 @@ async def query(client: ArangoClient, query_str: str, *,
             data['options'] = {'fullCount': True}
     if size:
         data['batchSize'] = size
-    queue = asyncio.Queue()
-    fetch_task = asyncio.create_task(fetch(client, data, queue))
-    while True:
-        obj = await queue.get()
-        yield obj
-        if fetch_task.done() and queue.empty():
-            return
-
-
-async def fetch(client, data, queue):
     resp = await client.request('POST', "/_api/cursor", data)
     while True:
         resp_data = await resp.json()
         for obj in resp_data['result']:
-            await queue.put(obj)
+            yield obj
         if resp_data['hasMore'] is True:
-            resp = await next_batch(client, resp_data['id'])
+            resp = await fetch_next(client, resp_data['id'])
         else:
             return
 
 
-async def next_batch(client, cursor_identifier, **kwargs):
-    return await client.request(
-        "PUT", f'/_api/cursor/{cursor_identifier}')
+async def fetch(client: ArangoClient, query_str: str, *,
+                size: Optional[int] = None, count: Optional[QueryOption] = None):
+    data = {'query': query_str}
+    if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
+        data['count'] = True
+        if count is QueryOption.FULL_COUNT:
+            data['options'] = {'fullCount': True}
+    if size:
+        data['batchSize'] = size
+    resp = await client.request('POST', "/_api/cursor", data)
+    resp_data = await resp.json()
+    return resp_data.get('id', None), resp_data['result']
+
+
+async def fetch_next(client, cursor_id):
+    resp = await client.request(
+        "PUT", f'/_api/cursor/{cursor_id}')
+    resp_data = await resp.json()
+    return resp_data.get('id', None), resp_data['result']
 
 
 async def delete(client, cursor_identifier, **kwargs):

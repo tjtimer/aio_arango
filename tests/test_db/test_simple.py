@@ -16,11 +16,11 @@ async def test_collection_create_read_update_delete():
         assert name in [c['name'] for c in clcs]
         await db.collection1.add({'name': 'Jane'})
         await db.collection1.add({'name': 'John'})
-        await db.collection1.add({'name': 'Jessi', 'age': 42})
+        await db['collection1'].add({'_key': 'rumbumski', 'name': 'Jessi', 'age': 42})
         await db.collection1.add([{'name': 'Jerry', 'age': 66}, {'name': 'Jimi', 'age': 76}])
         entries = list(await db.collection1.all())
         assert len(entries) is 5
+        print(entries)
         await db.collection1.delete()
         clcs = await db.get_collections()
         assert name not in [c['name'] for c in clcs]
-

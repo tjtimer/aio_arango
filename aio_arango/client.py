@@ -7,11 +7,13 @@ import asyncio
 from typing import Generator, Optional
 
 import aiohttp
+
 try:
     import uvloop
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     print("using uvloop!")
 except ImportError:
+    uvloop = None
     print("not using uvloop!")
 
 
@@ -42,7 +44,7 @@ class ArangoClient:
         if host is None:
             host = 'localhost'
         if port is None:
-            port = 16667
+            port = 8529
         self._base_url = f'{scheme}://{host}:{port}'
         self.__credentials = (username, password)
         self._is_authenticated = False
@@ -84,11 +86,6 @@ class ArangoClient:
         if resp.status < 300:
             return resp
         raise ClientError((await resp.json())['errorMessage'])
-
-    async def stream(self):
-        queue = asyncio.Queue()
-
-        pass
 
     async def login(self):
         if self._session is None:
