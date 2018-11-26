@@ -32,4 +32,7 @@ async def run():
         await db.collection1.add({'name': 'Jane'})
         await db.collection1.add({'name': 'John'})
         await db.collection1.add({'name': 'Karl', 'age': 42})
+        
+        # or add a list of documents
+        await db.collection1.add([{'name': 'Anna'}, {'name': 'Jacky', 'email': 'jacky@swag.com'}])
 ```
