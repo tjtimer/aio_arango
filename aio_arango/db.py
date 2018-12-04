@@ -46,7 +46,7 @@ class ArangoDB(ArangoClient):
         await super().login()
         await self._update()
 
-    async def get_collections(self, exclude_system: bool = None):
+    async def get_collections(self, exclude_system: bool = True):
         resp = await self.request(
             'GET', f'/_api/collection',
             params={'excludeSystem': str(bool(exclude_system))})
@@ -184,7 +184,9 @@ class ArangoCollection():
     # documents
 
     async def get(self, key):
-        return await self._client.request('GET', f'{self.doc_url}/{key}')
+        resp = await self._client.request('GET', f'{self.doc_url}/{key}')
+        return await resp.json()
+
 
     async def all(self):
         data = {'collection': self._name}
