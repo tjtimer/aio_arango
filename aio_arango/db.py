@@ -46,7 +46,9 @@ class ArangoDB(ArangoClient):
         await super().login()
         await self._update()
 
-    async def get_collections(self, exclude_system: bool = True):
+    async def get_collections(self, exclude_system: bool = None):
+        if exclude_system is None:
+            exclude_system = True
         resp = await self.request(
             'GET', f'/_api/collection',
             params={'excludeSystem': str(bool(exclude_system))})
