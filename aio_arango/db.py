@@ -46,7 +46,9 @@ class ArangoDB(ArangoClient):
         await super().login()
         await self._update()
 
-    async def get_collections(self, exclude_system: bool = True):
+    async def get_collections(self, exclude_system: bool = None):
+        if exclude_system is None:
+            exclude_system = True
         resp = await self.request(
             'GET', f'/_api/collection',
             params={'excludeSystem': str(bool(exclude_system))})
@@ -97,30 +99,30 @@ class ArangoDB(ArangoClient):
         return await fetch_next(self, cursor_id)
 
 
-class ArangoCollection():
+class ArangoCollection:
     URL = '/_api/collection'
 
     def __init__(self, client: ArangoDB, name: str, doc_type: Optional[DocumentType] = None):
-        self._client = client
-        self._name = name
+        self.__collection_name = name
         if doc_type is None:
             doc_type = DocumentType.VERTEX
         self._doc_type = doc_type
+        self._client = client
 
     @property
     def name(self):
-        return self._name
+        return self.__collection_name
 
     @property
     def url(self):
-        return f'{self.URL}/{self._name}'
+        return f'{self.URL}/{self.__collection_name}'
 
     @property
     def doc_url(self):
-        return f'/_api/document/{self._name}'
+        return f'/_api/document/{self.__collection_name}'
 
     async def create(self):
-        data = {'name': self._name}
+        data = {'name': self.__collection_name}
         if self._doc_type == DocumentType.EDGE:
             data['type'] = 3
         await self._client.request('POST', f'{self.URL}', data)
@@ -138,7 +140,7 @@ class ArangoCollection():
     async def rename(self, new_name: str):
         await self._client.request(
             'PUT', f'{self.url}/rename', {'name': new_name})
-        self._name = new_name
+        self.__collection_name = new_name
         await self._client._update()
 
     async def rotate(self):
@@ -189,7 +191,7 @@ class ArangoCollection():
 
 
     async def all(self):
-        data = {'collection': self._name}
+        data = {'collection': self.__collection_name}
         resp = await self._client.request('PUT', f'/_api/simple/all', data)
         return (c for c in (await resp.json())['result'])
 
