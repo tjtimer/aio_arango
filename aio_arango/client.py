@@ -80,7 +80,7 @@ class ArangoClient:
             cfg['params'] = params
         resp = await self._session.request(
             method,
-            self.url_prefix + url,
+            f'{self.url_prefix}{url}',
             **cfg
         )
         if resp.status < 300:
@@ -100,7 +100,7 @@ class ArangoClient:
     async def close(self):
         self._headers.pop('Authorization', None)
         await self._session.close()
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.5)
         self._session = None
 
 
