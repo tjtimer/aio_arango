@@ -189,24 +189,25 @@ class ArangoCollection:
         resp = await self._client.request('GET', f'{self.doc_url}/{key}')
         return await resp.json()
 
-
     async def all(self):
         data = {'collection': self.__collection_name}
         resp = await self._client.request('PUT', f'/_api/simple/all', data)
         return (c for c in (await resp.json())['result'])
 
     async def add(self, data: dict or list):
-        resp = await (await self._client.request(
-            'POST', f'{self.doc_url}', data)).json()
-        return resp
+        resp = await self._client.request(
+            'POST', f'{self.doc_url}', data)
+        return await resp.json()
 
     async def update(self, key, data: dict):
-        return await self._client.request(
+        resp = await self._client.request(
             'PATCH', f'{self.doc_url}/{key}', data)
+        return await resp.json()
 
     async def replace(self, key, data: dict):
-        return await self._client.request(
+        resp = await self._client.request(
             'PUT', f'{self.doc_url}/{key}', data)
+        return await resp.json()
 
     async def remove(self, key):
         return await self._client.request('DELETE', f'{self.doc_url}/{key}')
