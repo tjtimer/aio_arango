@@ -210,7 +210,9 @@ class ArangoCollection:
         return await resp.json()
 
     async def remove(self, key):
-        return await self._client.request('DELETE', f'{self.doc_url}/{key}')
+        resp = await self._client.request('DELETE', f'{self.doc_url}/{key}')
+        return await resp.json()
 
     async def head(self, key):
-        return await self._client.request('HEAD', f'{self.doc_url}/{key}')
+        resp = await self._client.request('HEAD', f'{self.doc_url}/{key}')
+        return await resp.json()
