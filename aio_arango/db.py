@@ -54,7 +54,10 @@ class ArangoDB(ArangoClient):
                 self._collections[clc['name']] = ArangoCollection(self, clc['name'])
         for gr in graphs:
             if gr['name'] not in self._graphs.keys():
-                self._graphs[gr['name']] = ArangoGraph(self, gr['name'], gr['edgeDefinitions'], gr['orphanCollections'])
+                self._graphs[gr['name']] = ArangoGraph(self,
+                                                       gr['name'],
+                                                       gr['edgeDefinitions'],
+                                                       gr['orphanCollections'])
 
     async def login(self):
         await super().login()
