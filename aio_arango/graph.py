@@ -1,89 +1,98 @@
 from typing import Iterator
 
-
-async def graph(client, graph_name, **kwargs):
-    return await client._session.request(
-        "GET", f"{client.url_prefix}/_api/gharial/{graph_name}", **kwargs)
+from aio_arango.client import ArangoClient
+from aio_arango.db import ArangoDB
 
 
-async def create(client, *,
-                 name: str = None, edge_def: dict = None,
-                 orphan_collections: Iterator = None):
-    json = {'name': name, 'edgeDefinition': edge_def}
-    if isinstance(orphan_collections, Iterator):
-        json['orphanCollections'] = list(*orphan_collections)
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/gharial", json=json)
+class ArangoGraph:
+    URL = '/_api/gharial'
 
+    def __init__(self,
+                 client: ArangoClient,
+                 name: str,
+                 edges: list,
+                 orphans: list = None):
+        self._name = name
+        self._edge_definitions = edges
+        self._orphan_collections = orphans
+        self._client = client
 
-async def delete(client, graph_name, **kwargs):
-    return await client._session.request(
-        "DELETE", f"{client.url_prefix}/_api/gharial/{graph_name}", **kwargs)
+    @property
+    def url(self):
+        return f'{self.URL}/{self._name}'
 
+    async def get(self):
+        return await self._client.request("GET", f"{self.url}")
 
-async def vertex(client, graph_name, collection_name, vertex_key, **kwargs):
-    return await client._session.request(
-        "GET",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-        **kwargs)
+    @classmethod
+    async def all(cls, client: ArangoDB):
+        return await client.request("GET", f"{cls.URL}")
 
+    async def create(self):
+        data = {'name': self._name, 'edgeDefinition': self._edge_definitions}
+        if isinstance(self._orphan_collections, Iterator):
+            data['orphanCollections'] = list(*self._orphan_collections)
+        resp = await self._client.request("POST", f"{self.URL}", data)
+        return await resp.json()
 
-async def vertex_create(client, graph_name, collection_name, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}",
-        **kwargs)
+    async def delete(self, **kwargs):
+        return await self._client.request(
+            "DELETE", f"{self.url}", **kwargs)
 
+    async def vertex(self, collection_name, vertex_key, **kwargs):
+        return await self._client.request(
+            "GET",
+            f"{self.url}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
+    
+    async def vertex_create(self, collection_name, **kwargs):
+        return await self._client.request(
+            "POST", f"{self.url}/vertex/{collection_name}",
+            **kwargs)
 
-async def vertex_update(client, graph_name, collection_name, vertex_key, **kwargs):
-    return await client._session.request(
-        "PATCH",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-        **kwargs)
+    async def vertex_update(self, collection_name, vertex_key, **kwargs):
+        return await self._client.request(
+            "PATCH",
+            f"{self.url}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
 
+    async def vertex_replace(self, collection_name, vertex_key, **kwargs):
+        return await self._client.request(
+            "PUT",
+            f"{self.url}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
 
-async def vertex_replace(client, graph_name, collection_name, vertex_key, **kwargs):
-    return await client._session.request(
-        "PUT",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-        **kwargs)
+    async def vertex_delete(self, collection_name, vertex_key, **kwargs):
+        return await self._client.request(
+            "DELETE",
+            f"{self.url}/vertex/{collection_name}/{vertex_key}",
+            **kwargs)
 
+    async def edge(self, collection_name, edge_key, **kwargs):
+        return await self._client.request(
+            "GET",
+            f"{self.url}/edge/{collection_name}/{edge_key}",
+            **kwargs)
 
-async def vertex_delete(client, graph_name, collection_name, vertex_key, **kwargs):
-    return await client._session.request(
-        "DELETE",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/vertex/{collection_name}/{vertex_key}",
-        **kwargs)
+    async def edge_create(self, collection_name, **kwargs):
+        return await self._client.request(
+            "POST", f"{self.url}/edge/{collection_name}",
+            **kwargs)
 
+    async def edge_update(self, collection_name, edge_key, **kwargs):
+        return await self._client.request(
+            "PATCH",
+            f"{self.url}/edge/{collection_name}/{edge_key}",
+            **kwargs)
 
-async def edge(client, graph_name, collection_name, edge_key, **kwargs):
-    return await client._session.request(
-        "GET",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-        **kwargs)
+    async def edge_replace(self, collection_name, edge_key, **kwargs):
+        return await self._client.request(
+            "PUT",
+            f"{self.url}/edge/{collection_name}/{edge_key}",
+            **kwargs)
 
-
-async def edge_create(client, graph_name, collection_name, **kwargs):
-    return await client._session.request(
-        "POST", f"{client.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}",
-        **kwargs)
-
-
-async def edge_update(client, graph_name, collection_name, edge_key, **kwargs):
-    return await client._session.request(
-        "PATCH",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-        **kwargs)
-
-
-async def edge_replace(client, graph_name, collection_name, edge_key, **kwargs):
-    return await client._session.request(
-        "PUT",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-        **kwargs)
-
-
-async def edge_delete(client, graph_name, collection_name, edge_key, **kwargs):
-    return await client._session.request(
-        "DELETE",
-        f"{client.url_prefix}/_api/gharial/{graph_name}/edge/{collection_name}/{edge_key}",
-        **kwargs)
+    async def edge_delete(self, collection_name, edge_key, **kwargs):
+        return await self._client.request(
+            "DELETE",
+            f"{self.url}/edge/{collection_name}/{edge_key}",
+            **kwargs)
