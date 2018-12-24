@@ -29,7 +29,7 @@ class ArangoGraph:
         return (await resp.json())['graphs']
 
     async def create(self):
-        data = {'name': self._name, 'edgeDefinition': self._edge_definitions}
+        data = {'name': self._name, 'edgeDefinitions': self._edge_definitions}
         if isinstance(self._orphan_collections, Iterator):
             data['orphanCollections'] = list(*self._orphan_collections)
         resp = await self._client.request("POST", f"{self.URL}", data)
