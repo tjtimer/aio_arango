@@ -53,9 +53,9 @@ class ArangoDB(ArangoClient):
             if clc['name'] not in self._collections.keys():
                 self._collections[clc['name']] = ArangoCollection(self, clc['name'])
         for gr in graphs:
-            if gr['name'] not in self._graphs.keys():
-                self._graphs[gr['name']] = ArangoGraph(self,
-                                                       gr['name'],
+            if gr['_key'] not in self._graphs.keys():
+                self._graphs[gr['_key']] = ArangoGraph(self,
+                                                       gr['_key'],
                                                        gr['edgeDefinitions'],
                                                        gr['orphanCollections'])
 
@@ -75,6 +75,12 @@ class ArangoDB(ArangoClient):
         clc = ArangoCollection(self, name, doc_type)
         if name not in self._collections.keys():
             await clc.create()
+            await self._update()
+
+    async def create_graph(self, name, edge_definitions: list):
+        gr = ArangoGraph(self, name, edge_definitions)
+        if name not in self._graphs.keys():
+            await gr.create()
             await self._update()
 
     async def index(self, **kwargs):
