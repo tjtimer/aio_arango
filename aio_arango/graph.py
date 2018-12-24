@@ -1,7 +1,6 @@
 from typing import Iterator
 
 from aio_arango.client import ArangoClient
-from aio_arango.db import ArangoDB
 
 
 class ArangoGraph:
@@ -25,7 +24,7 @@ class ArangoGraph:
         return await self._client.request("GET", f"{self.url}")
 
     @classmethod
-    async def all(cls, client: ArangoDB):
+    async def all(cls, client: ArangoClient):
         return await client.request("GET", f"{cls.URL}")
 
     async def create(self):
