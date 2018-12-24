@@ -3,10 +3,12 @@ database
 author: Tim "tjtimer" Jedro
 created: 24.10.18
 """
+import asyncio
 import enum
 from typing import Optional
 
 from aio_arango.client import ArangoClient
+from aio_arango.graph import ArangoGraph
 from aio_arango.query import fetch, fetch_next, query
 
 
@@ -30,17 +32,29 @@ class ArangoDB(ArangoClient):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
         self.db = db
         self._collections = {}
+        self._graphs = {}
 
     def __getattr__(self, item):
+        if item in self._graphs.keys():
+            return self._graphs[item]
         return self._collections[item]
 
     def __getitem__(self, item):
+        if item in self._graphs.keys():
+            return self._graphs[item]
         return self._collections[item]
 
     async def _update(self):
-        for clc in await self.get_collections():
+        collections, graphs = await asyncio.gather(*(
+            self.get_collections(),
+            ArangoGraph.all(self)
+        ))
+        for clc in collections:
             if clc['name'] not in self._collections.keys():
                 self._collections[clc['name']] = ArangoCollection(self, clc['name'])
+        for gr in graphs:
+            if gr['name'] not in self._graphs.keys():
+                self._graphs[gr['name']] = ArangoGraph(self, gr['name'], gr['edgeDefinitions'], gr['orphanCollections'])
 
     async def login(self):
         await super().login()
