@@ -31,8 +31,12 @@ class ArangoGraph:
     async def create(self):
         data = {'name': self._name, 'edgeDefinitions': self._edge_definitions}
         if isinstance(self._orphan_collections, Iterator):
-            data['orphanCollections'] = list(*self._orphan_collections)
+            data['orphanCollections'] = [*self._orphan_collections]
         resp = await self._client.request("POST", f"{self.URL}", data)
+        return await resp.json()
+
+    async def add_edge_definition(self, definition: dict):
+        resp = await self._client.request("POST", f"{self.url}/edge", definition)
         return await resp.json()
 
     async def delete(self, **kwargs):
