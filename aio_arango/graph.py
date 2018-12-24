@@ -25,7 +25,8 @@ class ArangoGraph:
 
     @classmethod
     async def all(cls, client: ArangoClient):
-        return await client.request("GET", f"{cls.URL}")
+        resp = await client.request("GET", f"{cls.URL}")
+        return (await resp.json())['graphs']
 
     async def create(self):
         data = {'name': self._name, 'edgeDefinition': self._edge_definitions}
