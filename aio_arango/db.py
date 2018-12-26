@@ -72,14 +72,14 @@ class ArangoDB(ArangoClient):
         return (c for c in (await resp.json())['result'])
 
     async def create_collection(self, name, doc_type: Optional[DocumentType] = None):
-        clc = ArangoCollection(self, name, doc_type)
         if name not in self._collections.keys():
+            clc = ArangoCollection(self, name, doc_type)
             await clc.create()
             await self._update()
 
     async def create_graph(self, name, edge_definitions: list):
-        gr = ArangoGraph(self, name, edge_definitions)
         if name not in self._graphs.keys():
+            gr = ArangoGraph(self, name, edge_definitions)
             await gr.create()
             await self._update()
 
@@ -87,9 +87,10 @@ class ArangoDB(ArangoClient):
         return await self.request(
             'GET', f'/_api/index', **kwargs)
 
-    async def create_index(self, idx_type: IndexType, **kwargs):
-        return await self.request(
-            'POST', f'/_api/index#{idx_type}', **kwargs)
+    async def create_index(self, collection: str, cfg: dict):
+        resp = await self.request(
+            'POST', f'/_api/index?collection={collection}', cfg)
+        return await resp.json()
 
     async def delete_index(self, index_handle, **kwargs):
         return await self.request(
@@ -217,14 +218,14 @@ class ArangoCollection:
         resp = await self._client.request('PUT', f'/_api/simple/all', data)
         return (c for c in (await resp.json())['result'])
 
-    async def add(self, data: dict or list):
+    async def add(self, data: dict or list, params: dict = None):
         resp = await self._client.request(
-            'POST', f'{self.doc_url}', data)
+            'POST', f'{self.doc_url}', data, params=params)
         return await resp.json()
 
-    async def update(self, key, data: dict):
+    async def update(self, key, data: dict, params: dict = None):
         resp = await self._client.request(
-            'PATCH', f'{self.doc_url}/{key}', data)
+            'PATCH', f'{self.doc_url}/{key}', data, params=params)
         return await resp.json()
 
     async def replace(self, key, data: dict):

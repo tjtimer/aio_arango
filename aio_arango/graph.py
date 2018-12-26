@@ -78,10 +78,10 @@ class ArangoGraph:
             f"{self.url}/edge/{collection_name}/{edge_key}",
             **kwargs)
 
-    async def edge_create(self, collection_name, **kwargs):
-        return await self._client.request(
-            "POST", f"{self.url}/edge/{collection_name}",
-            **kwargs)
+    async def edge_create(self, collection_name, data):
+        resp = await self._client.request(
+            "POST", f"{self.url}/edge/{collection_name}", data)
+        return await resp.json()
 
     async def edge_update(self, collection_name, edge_key, **kwargs):
         return await self._client.request(
