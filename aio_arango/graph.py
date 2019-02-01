@@ -51,7 +51,7 @@ class ArangoGraph:
         resp = await self._client.request(
             "POST",
             f"{self.url}/vertex/{collection_name}",
-            data, params={'returnNew': True})
+            data, params={'returnNew': 'true'})
         data = (await resp.json())['vertex']
         return data
 
