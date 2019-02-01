@@ -137,10 +137,11 @@ class ArangoGraphQuery:
     def depth(self, value):
         self._depth = value
 
-    def __str__(self):
+    @property
+    def statement(self):
         return (f'FOR v, e, p IN {self._direction} \"{self.start_vertex}\" '
-                f'GRAPH \"{self._graph_name}\" {" ".join(
-                    self._modifiers)} RETURN {self._returning}')
+                f'GRAPH \"{self._graph_name}\" '
+                f'{" ".join(self._modifiers)} RETURN {self._returning}')
 
     def lt(self, left, right):
         self._modifiers.append(f'FILTER {left} < {right}')
