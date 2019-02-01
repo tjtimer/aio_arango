@@ -78,6 +78,7 @@ class ArangoDB(ArangoClient):
             await self._update()
 
     async def create_graph(self, name, edge_definitions: list):
+        print(edge_definitions)
         if name not in self._graphs.keys():
             gr = ArangoGraph(self, name, edge_definitions)
             await gr.create()

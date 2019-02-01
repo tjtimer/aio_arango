@@ -4,6 +4,7 @@ author: Tim "tjtimer" Jedro
 created: 23.10.18
 """
 import asyncio
+from pprint import pprint
 from typing import Generator, Optional
 
 import aiohttp
@@ -31,8 +32,7 @@ DB_URL = '/_api/database'
 
 
 class ArangoClient:
-    _session: aiohttp.ClientSession = None
-    _headers: dict = {'Accept': 'application/json'}
+
 
     def __init__(self,
                  username: str, password: str, *,
@@ -48,6 +48,8 @@ class ArangoClient:
         self._base_url = f'{scheme}://{host}:{port}'
         self.__credentials = (username, password)
         self._is_authenticated = False
+        self._session = None
+        self._headers = {'Accept': 'application/json'}
         self.db = None
 
     @property
@@ -85,7 +87,9 @@ class ArangoClient:
         )
         if resp.status < 300:
             return resp
-        raise ClientError((await resp.json())['errorMessage'])
+        body = await resp.json()
+        pprint(body)
+        raise ClientError(body['errorMessage'])
 
     async def login(self):
         if self._session is None:
@@ -99,9 +103,13 @@ class ArangoClient:
 
     async def close(self):
         self._headers.pop('Authorization', None)
-        await self._session.close()
-        await asyncio.sleep(0.5)
-        self._session = None
+        try:
+            await self._session.close()
+            await asyncio.sleep(0.5)
+        except AttributeError as er:
+            print(er)
+        finally:
+            self._session = None
 
 
 class ArangoAdmin(ArangoClient):
