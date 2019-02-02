@@ -47,19 +47,19 @@ class ArangoGraph:
             "GET",
             f"{self.url}/vertex/{_id}")
 
-    async def vertex_create(self, collection_name, data):
+    async def vertex_create(self, collection_name, data, **kwargs):
         resp = await self._client.request(
             "POST",
             f"{self.url}/vertex/{collection_name}",
-            data, params={'returnNew': 'true'})
-        data = (await resp.json())['vertex']
-        return data
+            data, **kwargs)
+        return (await resp.json())['vertex']
 
-    async def vertex_update(self, _id, data):
-        return await self._client.request(
+    async def vertex_update(self, _id, data, **kwargs):
+        resp = await self._client.request(
             "PATCH",
             f"{self.url}/vertex/{_id}",
-            data)
+            data, **kwargs)
+        return (await resp.json())['vertex']
 
     async def vertex_replace(self, _id, data):
         return await self._client.request(
@@ -79,16 +79,17 @@ class ArangoGraph:
             f"{self.url}/edge/{_id}",
             **kwargs)
 
-    async def edge_create(self, collection_name, data):
+    async def edge_create(self, collection_name, data, **kwargs):
         resp = await self._client.request(
-            "POST", f"{self.url}/edge/{collection_name}", data)
-        return await resp.json()
+            "POST", f"{self.url}/edge/{collection_name}", data, **kwargs)
+        return (await resp.json())['edge']
 
     async def edge_update(self, _id, **kwargs):
-        return await self._client.request(
+        resp = await self._client.request(
             "PATCH",
             f"{self.url}/edge/{_id}",
             **kwargs)
+        return (await resp.json())['edge']
 
     async def edge_replace(self, _id, **kwargs):
         return await self._client.request(
