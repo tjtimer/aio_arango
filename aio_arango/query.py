@@ -119,7 +119,7 @@ async def fetch_next(client, cursor_id):
     return resp_data.get('id', None), resp_data['result']
 
 
-async def delete(client, cursor_identifier, **kwargs):
+async def delete(client, cursor_identifier):
     return await client.request(
         'DELETE', f'/_api/cursor/{cursor_identifier}')
 
