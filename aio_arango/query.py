@@ -85,17 +85,20 @@ async def query(client: ArangoClient, query_str: str, *,
         data['count'] = True
         if count is QueryOption.FULL_COUNT:
             data['options'] = {'fullCount': True}
-    if size:
-        data['batchSize'] = size
+    if size is None:
+        size = 25
+    data['batchSize'] = size
     resp = await client.request('POST', "/_api/cursor", data)
     while True:
         resp_data = await resp.json()
-        for obj in resp_data['result']:
-            yield obj
-        if resp_data['hasMore'] is True:
-            resp = await fetch_next(client, resp_data['id'])
-        else:
+        yield resp_data
+        cancelled = resp_data['id'] in client.cancelled
+        if cancelled or resp_data['hasMore'] is False:
+            if cancelled:
+                await delete(client, resp_data['id'])
+                client.cancelled.remove(resp_data['id'])
             return
+        resp = await fetch_next(client, resp_data['id'])
 
 
 async def fetch(client: ArangoClient, query_str: str, *,

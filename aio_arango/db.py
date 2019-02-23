@@ -122,14 +122,15 @@ class ArangoDB(ArangoClient):
 
     async def fetch_one(self, query_str: str, options: dict = None):
         if options is None:
-            options = {'batchSize': 1}
-        c_id, data = await fetch(self, query_str, **options)
+            options = {}
         try:
+            c_id, data = await fetch(self, query_str, size=1, **options)
+            if len(data) <= 1:
+                return data or {}
             return data[0]
         finally:
             if c_id != '' and c_id is not None:
                 await delete(self, c_id)
-
 
     async def fetch_next(self, cursor_id):
         return await fetch_next(self, cursor_id)
