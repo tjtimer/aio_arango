@@ -44,14 +44,14 @@ class ArangoClient:
             host = 'localhost'
         if port is None:
             port = 8529
-        self._base_url = f'{scheme}://{host}:{port}'
         self.__credentials = (username, password)
+        self._base_url = f'{scheme}://{host}:{port}'
         self._is_authenticated = False
         self._session = None
         self._headers = {'Accept': 'application/json'}
+        self._cancelled = []
         self.db = None
-        self.counter = 0
-        self.cancelled = []
+        self._request_counter = 0
 
     @property
     def url_prefix(self):
@@ -62,6 +62,10 @@ class ArangoClient:
     @property
     def is_authenticated(self):
         return self._headers.get('Authorization') is not None
+
+    @property
+    def request_count(self):
+        return self._request_counter
 
     async def __aenter__(self):
         await self.login()
@@ -74,7 +78,7 @@ class ArangoClient:
                       data: Optional[dict] = None, *,
                       params: Optional[dict] = None,
                       headers: Optional[dict] = None) -> aiohttp.ClientResponse:
-        self.counter += 1
+        self._request_counter += 1
         cfg = {'headers': self._headers}
         if headers:
             cfg['headers'].update(**headers)

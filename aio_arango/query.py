@@ -1,5 +1,6 @@
 import enum
 from collections import namedtuple
+from dataclasses import dataclass
 from typing import Optional
 
 from aio_arango.client import ArangoClient
@@ -78,13 +79,120 @@ class QueryBuilder:
         return self
 
 
-async def query(client: ArangoClient, query_str: str, *,
-                size: Optional[int] = None, count: Optional[QueryOption] = None):
+@dataclass
+class QueryRequestOptions:
+    """
+    "options": {
+        "failOnWarning": true,
+        "fullCount": true,
+        "intermediateCommitCount": 0,
+        "intermediateCommitSize": 0,
+        "maxPlans": 0,
+        "maxTransactionSize": 0,
+        "maxWarningCount": 0,
+        "optimizer.rules": [
+          "string"
+        ],
+        "profile": 0,
+        "satelliteSyncWait": true,
+        "skipInaccessibleCollections": true,
+        "stream": true
+      },
+    """
+
+    def __init__(self,
+                 fail_on_warning: bool = None,
+                 full_count: bool = None,
+                 intermediate_commit_count: int = None,
+                 intermediate_commit_size: int = None,
+                 max_warning_count: int = None,
+                 profile: int = None,
+                 satellite_sync_wait: bool = None,
+                 skip_inaccessible_collections: bool = None,
+                 stream: bool = None):
+        self.fail_on_warning = fail_on_warning or False
+        self.full_count = full_count or False
+        self.intermediate_commit_count = intermediate_commit_count or 0
+        self.intermediate_commit_size = intermediate_commit_size or 0
+        self.max_warning_count = max_warning_count or 0
+        self.profile = profile or 0
+        self.satellite_sync_wait = satellite_sync_wait or False
+        self.skip_inaccessible_collections = skip_inaccessible_collections or True
+        self.stream = stream or False
+
+    class Optimizer:
+        rules = []
+
+    @property
+    def optimizer(self):
+        return self.Optimizer
+
+
+class QueryRequest:
+    """
+    example: {
+      "batchSize": 0,
+      "bindVars": [
+        {}
+      ],
+      "cache": true,
+      "count": true,
+      "memoryLimit": 0,
+      "options": {
+        "failOnWarning": true,
+        "fullCount": true,
+        "intermediateCommitCount": 0,
+        "intermediateCommitSize": 0,
+        "maxPlans": 0,
+        "maxTransactionSize": 0,
+        "maxWarningCount": 0,
+        "optimizer.rules": [
+          "string"
+        ],
+        "profile": 0,
+        "satelliteSyncWait": true,
+        "skipInaccessibleCollections": true,
+        "stream": true
+      },
+      "query": "string",
+      "ttl": 0
+    }
+    """
+
+    def __init__(self,
+                 query: QueryBuilder,
+                 bind_vars: list or tuple = None,
+                 batch_size: int = None,
+                 cache: bool = None,
+                 count: bool = None,
+                 memory_limit: int = None,
+                 options: QueryRequestOptions = None):
+        self._query = query
+        self._bind_vars = bind_vars or []
+        self._batch_size = batch_size or 25
+        self._cache = cache or False
+        self._count = count or False
+        self._memory_limit = memory_limit or int(5 * 1024 * 1024)  # 5 MegaByte
+        self._options = options or QueryRequestOptions()
+
+
+class ArangoQuery:
+    def __init__(self):
+        self._id = None
+        self._page_info = None
+        self._request = QueryRequest(QueryBuilder())
+        self._state = {}
+
+
+async def query(
+        client: ArangoClient,
+        query_str: str, *,
+        size: int = None,
+        count: bool = None,
+        full_count: bool = None):
     data = {'query': query_str}
-    if count in [QueryOption.COUNT, QueryOption.FULL_COUNT]:
-        data['count'] = True
-        if count is QueryOption.FULL_COUNT:
-            data['options'] = {'fullCount': True}
+    data['count'] = count or False
+    data['options'] = {'fullCount': full_count or False}
     if size is None:
         size = 25
     data['batchSize'] = size
@@ -92,13 +200,14 @@ async def query(client: ArangoClient, query_str: str, *,
     while True:
         resp_data = await resp.json()
         yield resp_data
-        cancelled = resp_data['id'] in client.cancelled
-        if cancelled or resp_data['hasMore'] is False:
-            if cancelled:
-                await delete(client, resp_data['id'])
-                client.cancelled.remove(resp_data['id'])
+        if resp_data['hasMore'] is False:
             return
-        resp = await fetch_next(client, resp_data['id'])
+        cancelled = resp_data['id'] in client._cancelled
+        if cancelled:
+            await delete(client, resp_data['id'])
+            client._cancelled.remove(resp_data['id'])
+            return
+        resp = await client.request('PUT', f"/_api/cursor/{resp_data['id']}")
 
 
 async def fetch(client: ArangoClient, query_str: str, *,
