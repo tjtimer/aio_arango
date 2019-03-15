@@ -112,7 +112,10 @@ class ArangoDB(ArangoClient):
         if options is None:
             options = {}
         async for obj in query(self, query_str, **options):
-            yield obj
+            results = obj.get('result', None)
+            if results:
+                for item in results:
+                    yield item
 
     async def fetch(self, query_str: str, options: dict = None):
         if options is None:

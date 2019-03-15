@@ -1,6 +1,7 @@
 from typing import Iterator, Optional
 
 from aio_arango.client import ArangoClient
+from aio_arango.query import QueryBuilder
 
 
 class ArangoGraph:
@@ -105,25 +106,24 @@ class ArangoGraph:
             **kwargs)
 
 
-class ArangoGraphQuery:
+class ArangoGraphQuery(QueryBuilder):
 
     def __init__(self,
                  graph_name: str, *,
                  depth: Optional['int, float, list, tuple'] = None,
                  direction: str = None,
                  returning: str = None):
-        if direction is None:
-            direction = 'ANY'
-        if returning is None:
-            returning = 'p'
+        super().__init__()
 
         self._depth = depth
-        self._direction = direction.upper()
+        self._direction = direction or 'ANY'
         self._returning = returning
         self._graph_name = graph_name
-        self._modifiers = []
-
         self.start_vertex = None
+
+    @property
+    def name(self):
+        return self._graph_name
 
     @property
     def depth(self):
@@ -143,40 +143,4 @@ class ArangoGraphQuery:
     def statement(self):
         return (f'FOR v, e, p IN {self._direction} \"{self.start_vertex}\" '
                 f'GRAPH \"{self._graph_name}\" '
-                f'{" ".join(self._modifiers)} RETURN {self._returning}')
-
-    def lt(self, left, right):
-        self._modifiers.append(f'FILTER {left} < {right}')
-        return self
-
-    def lte(self, left, right):
-        self._modifiers.append(f'FILTER {left} <= {right}')
-        return self
-
-    def eq(self, left, right):
-        self._modifiers.append(f'FILTER {left} == {right}')
-        return self
-
-    def neq(self, left, right):
-        self._modifiers.append(f'FILTER {left} != {right}')
-        return self
-
-    def like(self, left, right):
-        self._modifiers.append(f'FILTER {left} LIKE {right}')
-        return self
-
-    def limit(self, size: int, offset: int = None):
-        if offset is None:
-            offset = 0
-        self._modifiers.append(f'LIMIT {abs(int(offset))}, {abs(int(size))}')
-        return self
-
-    def asc(self, field):
-        self._modifiers.append(f'SORT {field} ASC')
-
-    def desc(self, field):
-        self._modifiers.append(f'SORT {field} DESC')
-
-    async def exec(self, client):
-        async for obj in client.query(self.statement):
-            yield obj
+                f'{" ".join(self._expressions)} RETURN {self._returning}')

@@ -177,16 +177,11 @@ class QueryRequest:
 
 
 class ArangoQuery:
-    __slots__ = (
-        '_id', '_request', '_result',
-        '_page_info', '_error', '_code'
-    )
-
     def __init__(self):
         self._id = None
-        self._request = None
-        self._result = None
         self._page_info = None
+        self._request = QueryRequest(QueryBuilder())
+        self._state = {}
 
 
 async def query(
@@ -195,15 +190,12 @@ async def query(
         size: int = None,
         count: bool = None,
         full_count: bool = None):
-
-    data = {
-        'query': query_str,
-        'batchSize': size or 25,
-        'count': count or False,
-        'options': {
-            'fullCount': full_count or False
-        }
-    }
+    data = {'query': query_str}
+    data['count'] = count or False
+    data['options'] = {'fullCount': full_count or False}
+    if size is None:
+        size = 25
+    data['batchSize'] = size
     resp = await client.request('POST', "/_api/cursor", data)
     while True:
         resp_data = await resp.json()
@@ -213,6 +205,7 @@ async def query(
         cancelled = resp_data['id'] in client._cancelled
         if cancelled:
             await delete(client, resp_data['id'])
+            client._cancelled.remove(resp_data['id'])
             return
         resp = await client.request('PUT', f"/_api/cursor/{resp_data['id']}")
 
@@ -238,9 +231,7 @@ async def fetch_next(client, cursor_id):
     return resp_data.get('id', None), resp_data['result']
 
 
-async def delete(client, cursor_id):
-    resp = await client.request(
-        'DELETE', f'/_api/cursor/{cursor_id}')
-    client._cancelled.remove(cursor_id)
-    return resp
+async def delete(client, cursor_identifier):
+    return await client.request(
+        'DELETE', f'/_api/cursor/{cursor_identifier}')
 
