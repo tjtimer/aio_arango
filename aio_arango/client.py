@@ -4,7 +4,6 @@ author: Tim "tjtimer" Jedro
 created: 23.10.18
 """
 import asyncio
-from pprint import pprint
 from typing import Generator, Optional
 
 import aiohttp
@@ -51,6 +50,8 @@ class ArangoClient:
         self._session = None
         self._headers = {'Accept': 'application/json'}
         self.db = None
+        self.counter = 0
+        self.cancelled = []
 
     @property
     def url_prefix(self):
@@ -73,6 +74,7 @@ class ArangoClient:
                       data: Optional[dict] = None, *,
                       params: Optional[dict] = None,
                       headers: Optional[dict] = None) -> aiohttp.ClientResponse:
+        self.counter += 1
         cfg = {'headers': self._headers}
         if headers:
             cfg['headers'].update(**headers)
@@ -88,7 +90,7 @@ class ArangoClient:
         if resp.status < 300:
             return resp
         body = await resp.json()
-        pprint(body)
+        # pprint(body)
         raise ClientError(body['errorMessage'])
 
     async def login(self):

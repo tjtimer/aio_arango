@@ -31,7 +31,7 @@ class ArangoGraph:
     async def create(self):
         data = {'name': self._name, 'edgeDefinitions': self._edge_definitions}
         if isinstance(self._orphan_collections, Iterator):
-            data['orphanCollections'] = [*self._orphan_collections]
+            data['orphanCollections'] = [*set(self._orphan_collections)]
         resp = await self._client.request("POST", f"{self.URL}", data)
         return await resp.json()
 
@@ -47,19 +47,19 @@ class ArangoGraph:
             "GET",
             f"{self.url}/vertex/{_id}")
 
-    async def vertex_create(self, collection_name, data):
+    async def vertex_create(self, collection_name, data, **kwargs):
         resp = await self._client.request(
             "POST",
             f"{self.url}/vertex/{collection_name}",
-            data, params={'returnNew': True})
-        data = (await resp.json())['vertex']
-        return data
+            data, **kwargs)
+        return (await resp.json())['vertex']
 
-    async def vertex_update(self, _id, data):
-        return await self._client.request(
+    async def vertex_update(self, _id, data, **kwargs):
+        resp = await self._client.request(
             "PATCH",
             f"{self.url}/vertex/{_id}",
-            data)
+            data, **kwargs)
+        return (await resp.json())['vertex']
 
     async def vertex_replace(self, _id, data):
         return await self._client.request(
@@ -79,16 +79,18 @@ class ArangoGraph:
             f"{self.url}/edge/{_id}",
             **kwargs)
 
-    async def edge_create(self, collection_name, data):
+    async def edge_create(self, collection_name, data, **kwargs):
         resp = await self._client.request(
-            "POST", f"{self.url}/edge/{collection_name}", data)
-        return await resp.json()
+            "POST", f"{self.url}/edge/{collection_name}", data, **kwargs)
+        return (await resp.json())['edge']
 
-    async def edge_update(self, _id, **kwargs):
-        return await self._client.request(
+    async def edge_update(self, _id, data, **kwargs):
+        resp = await self._client.request(
             "PATCH",
             f"{self.url}/edge/{_id}",
+            data,
             **kwargs)
+        return (await resp.json())['edge']
 
     async def edge_replace(self, _id, **kwargs):
         return await self._client.request(
@@ -128,7 +130,7 @@ class ArangoGraphQuery:
         depth = self._depth
         if depth is None:
             depth = (1, 1)
-        elif isinstance(depth, (int, float)):
+        elif isinstance(depth, (int, float, bytes)):
             depth = (abs(int(depth)), abs(int(depth)))
         start, stop = sorted(depth)[:2]
         return f'{start}..{stop}'

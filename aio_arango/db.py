@@ -9,7 +9,7 @@ from typing import Optional
 
 from aio_arango.client import ArangoClient
 from aio_arango.graph import ArangoGraph
-from aio_arango.query import fetch, fetch_next, query
+from aio_arango.query import delete, fetch, fetch_next, query
 
 
 class DocumentType(enum.Enum):
@@ -119,6 +119,18 @@ class ArangoDB(ArangoClient):
         if options is None:
             options = {}
         return await fetch(self, query_str, **options)
+
+    async def fetch_one(self, query_str: str, options: dict = None):
+        if options is None:
+            options = {}
+        try:
+            c_id, data = await fetch(self, query_str, size=1, **options)
+            if len(data) <= 1:
+                return data or {}
+            return data[0]
+        finally:
+            if c_id != '' and c_id is not None:
+                await delete(self, c_id)
 
     async def fetch_next(self, cursor_id):
         return await fetch_next(self, cursor_id)
