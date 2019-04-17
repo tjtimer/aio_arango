@@ -32,7 +32,6 @@ DB_URL = '/_api/database'
 
 class ArangoClient:
 
-
     def __init__(self,
                  username: str, password: str, *,
                  host: Optional[str] = None,
@@ -44,20 +43,21 @@ class ArangoClient:
             host = 'localhost'
         if port is None:
             port = 8529
-        self._base_url = f'{scheme}://{host}:{port}'
+
         self.__credentials = (username, password)
-        self._is_authenticated = False
-        self._session = None
+        self._base_url = f'{scheme}://{host}:{port}'
         self._headers = {'Accept': 'application/json'}
-        self.db = None
+        self._cancelled = []
+        self._session = None
+        self._db = None
+
         self.counter = 0
-        self.cancelled = []
 
     @property
     def url_prefix(self):
-        if self.db is None:
+        if self._db is None:
             return self._base_url
-        return f'{self._base_url}/_db/{self.db}'
+        return f'{self._base_url}/_db/{self._db}'
 
     @property
     def is_authenticated(self):
@@ -102,12 +102,13 @@ class ArangoClient:
         )
         data = await response.json()
         self._headers['Authorization'] = f"bearer {data['jwt']}"
+        self.__credentials = None
 
     async def close(self):
         self._headers.pop('Authorization', None)
         try:
             await self._session.close()
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.25)
         except AttributeError as er:
             print(er)
         finally:
@@ -119,11 +120,15 @@ class ArangoAdmin(ArangoClient):
     def __init__(self, username: str, password: str, *,
                  host: str = None, port: int = None, scheme: str = None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
-        self._databases = []
+        self._databases = ()
+
+    @property
+    def databases(self):
+        return list(self._databases)
 
     async def login(self):
         await super().login()
-        self._databases = list(await self.get_dbs())
+        self._databases = await self.get_dbs()
 
     async def create_db(self, name: str, *, users: Optional[list] = None):
         data = {'name': name}
