@@ -29,7 +29,6 @@ async def test_graph_create_entries(graph_db):
     await graph_db.knows_n_rides.edge_create('knows', {'_from': 'person/jane', '_to': 'person/sven'})
     await graph_db.knows_n_rides.edge_create('rides', {'_from': 'person/jane', '_to': 'bike/megacycle'})
     e_resp = await graph_db.knows_n_rides.edge_create('rides', {'_from': 'person/kalle', '_to': 'bike/diamant'})
-    pprint(e_resp)
     assert p_resp['_id'] == 'person/sven'
     assert b_resp['_id'] == 'bike/megacycle'
 
