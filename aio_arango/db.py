@@ -30,7 +30,7 @@ class ArangoDB(ArangoClient):
     def __init__(self, username: str, password: str, db: str, *,
                  host: str = None, port: int = None, scheme: str = None):
         super().__init__(username, password, host=host, port=port, scheme=scheme)
-        self.db = db
+        self._db = db
         self._collections = {}
         self._graphs = {}
 
@@ -78,7 +78,6 @@ class ArangoDB(ArangoClient):
             await self._update()
 
     async def create_graph(self, name, edge_definitions: list):
-        print(edge_definitions)
         if name not in self._graphs.keys():
             gr = ArangoGraph(self, name, edge_definitions)
             await gr.create()

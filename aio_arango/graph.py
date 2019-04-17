@@ -115,7 +115,7 @@ class ArangoGraphQuery:
         if direction is None:
             direction = 'ANY'
         if returning is None:
-            returning = 'v'
+            returning = 'p'
 
         self._depth = depth
         self._direction = direction.upper()
