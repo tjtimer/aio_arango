@@ -8,7 +8,7 @@
 ### Installation
 
 ```bash
-pip install aio_arango
+pip install -e git+https://github.com/tjtimer/aio_arango
 ```  
 
 ### Usage

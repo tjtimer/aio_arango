@@ -3,6 +3,20 @@ conftest
 author: Tim "tjtimer" Jedro
 created: 24.10.18
 """
-from string import ascii_letters
+import string
 
-alphabet = [*ascii_letters.upper(), *ascii_letters.lower(), *[str(i) for i in range(10)], '-', '_']
+import pytest
+
+from aio_arango.client import ArangoAdmin
+from aio_arango.db import ArangoDB
+
+alphabet = [*string.ascii_letters, string.digits, '-', '_']
+
+
+@pytest.fixture
+async def test_db(loop):
+    async with ArangoAdmin('root', 'arango-pw') as admin:
+        await admin.create_db('test-db')
+        async with ArangoDB('root', 'arango-pw', 'test-db') as db:
+            yield db
+        await admin.delete_db('test-db')
