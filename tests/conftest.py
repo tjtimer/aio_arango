@@ -23,7 +23,7 @@ async def test_db(loop):
 
 
 @pytest.fixture
-async def graph_db(loop):
+async def test_graph(loop):
     async with ArangoAdmin('root', 'arango-pw') as admin:
         if 'graph-db' in admin.databases:
             await admin.delete_db('graph-db')
@@ -38,5 +38,5 @@ async def graph_db(loop):
                 [{'collection': 'knows', 'from': ['person'], 'to': ['person']},
                  {'collection': 'rides', 'from': ['person'], 'to': ['bike']}]
             )
-            yield db
+            yield db.knows_n_rides
         await admin.delete_db('graph-db')
