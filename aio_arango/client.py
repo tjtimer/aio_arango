@@ -7,17 +7,18 @@ import asyncio
 from typing import Generator, Optional
 
 import aiohttp
+from aiohttp import UnixConnector
 
 try:
+    # noinspection PyUnresolvedReferences
     import uvloop
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     print("using uvloop!")
 except ImportError:
-    uvloop = None
     print("not using uvloop!")
 
 
-class ClientError(Exception):
+class ArangoClientError(Exception):
     pass
 
 
@@ -89,13 +90,11 @@ class ArangoClient:
         )
         if resp.status < 300:
             return resp
-        body = await resp.json()
-        # pprint(body)
-        raise ClientError(body['errorMessage'])
+        raise ArangoClientError(f"ArangoDB server response: {(await resp.json())['errorMessage']}")
 
     async def login(self):
         if self._session is None:
-            self._session = aiohttp.ClientSession()
+            self._session = aiohttp.ClientSession(connector=UnixConnector(path='/home/tjtimer/.tmp/arango1.sock'))
         response = await self.request(
             'POST', '/_open/auth',
             data={'username': self.__credentials[0], 'password': self.__credentials[1]}
@@ -109,8 +108,8 @@ class ArangoClient:
         try:
             await self._session.close()
             await asyncio.sleep(0.25)
-        except AttributeError as er:
-            print(er)
+        except AttributeError:
+            pass
         finally:
             self._session = None
 
@@ -135,7 +134,7 @@ class ArangoAdmin(ArangoClient):
         if users:
             data['users'] = users
         await self.request('POST', DB_URL, data)
-        self._databases = list(await self.get_dbs())
+        self._databases = await self.get_dbs()
 
     async def get_dbs(self) -> Generator:
         resp = await self.request('GET', DB_URL)

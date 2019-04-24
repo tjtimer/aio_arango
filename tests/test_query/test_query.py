@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from aio_arango.query import fetch_next
 
 
@@ -6,6 +8,7 @@ async def test_query(test_db):
     page_counter = 0
     async for page in test_db.query("FOR i IN 1..5000 RETURN {'idx': i, 'sqr': POW(i, 2)}"):
         page_counter += 1
+        pprint(page)
         for obj in page['result']:
             obj_counter += 1
             assert 'idx' in obj.keys()
